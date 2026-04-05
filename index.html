@@ -386,7 +386,7 @@ async function runBatch() {
     document.getElementById('progressDetail').textContent = `Analyzing posting ${i+1}. ${postings.length - i - 1} remaining after this.`;
 
     try {
-      const result = await analyzePosting(posting, apiKey);
+      const result = await analyzePosting(posting);
       result._raw = posting;
       results.push(result);
       saveResultsToStorage(timestamp);
@@ -406,7 +406,7 @@ async function runBatch() {
   document.getElementById('runBtn').disabled = false;
 }
 
-async function analyzePosting(posting, apiKey) {
+async function analyzePosting(posting) {
   const systemPrompt = SYSTEM_PROMPT + '\n\n=== LIVE KNOWLEDGE BASE FROM NOTION ===\n' + cachedKnowledge;
   const res = await fetch(`${WORKER_URL}/analyze`, {
     method: 'POST',
