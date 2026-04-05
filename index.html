@@ -3,156 +3,189 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vishnu JR — Job Match Agent</title>
+<title>Vishnu JR — Batch Job Agent</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8f8f6; color: #1a1a1a; min-height: 100vh; }
-  .container { max-width: 860px; margin: 0 auto; padding: 2rem 1.5rem; }
-  h1 { font-size: 22px; font-weight: 500; margin-bottom: 4px; }
-  .subtitle { font-size: 13px; color: #666; margin-bottom: 2rem; line-height: 1.6; }
-  .card { background: #fff; border: 0.5px solid #e0e0e0; border-radius: 12px; padding: 1.25rem; margin-bottom: 16px; }
-  label { font-size: 13px; color: #555; display: block; margin-bottom: 6px; font-weight: 500; }
-  textarea { width: 100%; padding: 10px 12px; font-size: 13px; font-family: inherit; border: 0.5px solid #ddd; border-radius: 8px; background: #fafafa; color: #1a1a1a; resize: vertical; line-height: 1.6; }
-  textarea:focus { outline: none; border-color: #999; background: #fff; }
-  #jobInput { min-height: 160px; }
-  #updateInput { min-height: 80px; }
-  .btn-row { display: flex; gap: 8px; margin-top: 12px; align-items: center; flex-wrap: wrap; }
-  button { padding: 8px 18px; border: 0.5px solid #ccc; border-radius: 8px; background: #fff; color: #1a1a1a; cursor: pointer; font-size: 13px; font-family: inherit; transition: background 0.15s; }
-  button:hover { background: #f0f0ee; }
-  button.primary { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
-  button.primary:hover { background: #333; }
-  button:disabled { opacity: 0.4; cursor: not-allowed; }
-  .spinner { display: inline-block; width: 15px; height: 15px; border: 2px solid #ddd; border-top-color: #666; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .status-msg { font-size: 13px; color: #666; }
-  .tabs { display: flex; gap: 6px; margin-bottom: 16px; border-bottom: 0.5px solid #e0e0e0; padding-bottom: 12px; }
-  .tab { padding: 5px 14px; border: 0.5px solid #ddd; border-radius: 20px; font-size: 13px; cursor: pointer; background: #fff; color: #666; }
-  .tab.active { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
-  .overall-row { display: flex; align-items: baseline; gap: 10px; margin-bottom: 16px; }
-  .overall-num { font-size: 42px; font-weight: 500; }
-  .overall-label { font-size: 14px; color: #666; }
-  .verdict { padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; margin-bottom: 20px; display: inline-block; }
-  .verdict-pass { background: #e1f5ee; color: #0a6040; }
-  .verdict-fail { background: #fce8e8; color: #8b2020; }
-  .verdict-applied { background: #f0f0ee; color: #555; }
-  .dim-block { margin-bottom: 14px; }
-  .dim-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-  .dim-name { font-size: 13px; color: #444; }
-  .dim-weight { font-size: 11px; color: #999; }
-  .dim-score { font-size: 13px; font-weight: 500; }
-  .bar-bg { height: 5px; background: #eee; border-radius: 3px; overflow: hidden; margin-bottom: 4px; }
-  .bar-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
-  .dim-reasoning { font-size: 12px; color: #777; line-height: 1.5; }
-  .resume-box { font-size: 12px; font-family: 'Courier New', monospace; white-space: pre-wrap; background: #f8f8f6; padding: 16px; border-radius: 8px; line-height: 1.7; color: #1a1a1a; max-height: 640px; overflow-y: auto; border: 0.5px solid #e8e8e8; }
-  .strategy-item { font-size: 13px; color: #555; line-height: 1.6; padding: 8px 0; border-bottom: 0.5px solid #f0f0f0; }
-  .strategy-item:last-child { border-bottom: none; }
-  .api-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
-  .api-input { flex: 1; padding: 8px 12px; font-size: 13px; font-family: inherit; border: 0.5px solid #ddd; border-radius: 8px; background: #fafafa; color: #1a1a1a; }
-  .api-input:focus { outline: none; border-color: #999; }
-  .section-label { font-size: 11px; font-weight: 500; color: #999; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
-  #results { display: none; }
-  .kb-status { font-size: 12px; color: #999; margin-top: 6px; }
-  .kb-status.loaded { color: #0a6040; }
-  .kb-status.error { color: #8b2020; }
-  .notion-badge { display: inline-block; font-size: 11px; padding: 2px 8px; background: #f0f0ee; border-radius: 4px; color: #666; margin-left: 8px; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f2; color: #1a1a1a; min-height: 100vh; }
+.container { max-width: 920px; margin: 0 auto; padding: 2rem 1.5rem; }
+h1 { font-size: 22px; font-weight: 500; margin-bottom: 4px; }
+.subtitle { font-size: 13px; color: #666; margin-bottom: 2rem; line-height: 1.6; }
+.card { background: #fff; border: 0.5px solid #e0e0e0; border-radius: 12px; padding: 1.25rem; margin-bottom: 14px; }
+label { font-size: 13px; color: #555; display: block; margin-bottom: 6px; font-weight: 500; }
+textarea { width: 100%; padding: 10px 12px; font-size: 13px; font-family: inherit; border: 0.5px solid #ddd; border-radius: 8px; background: #fafafa; color: #1a1a1a; resize: vertical; line-height: 1.6; }
+textarea:focus { outline: none; border-color: #999; background: #fff; }
+#batchInput { min-height: 280px; font-family: 'Courier New', monospace; font-size: 12px; }
+.btn-row { display: flex; gap: 8px; margin-top: 12px; align-items: center; flex-wrap: wrap; }
+button { padding: 8px 18px; border: 0.5px solid #ccc; border-radius: 8px; background: #fff; color: #1a1a1a; cursor: pointer; font-size: 13px; font-family: inherit; transition: background 0.15s; }
+button:hover { background: #f0f0ee; }
+button.primary { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+button.primary:hover { background: #333; }
+button.danger { background: #fff; color: #c0392b; border-color: #f0c0c0; }
+button.danger:hover { background: #fce8e8; }
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+.spinner { display: inline-block; width: 15px; height: 15px; border: 2px solid #ddd; border-top-color: #666; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.status-msg { font-size: 13px; color: #666; }
+.section-label { font-size: 11px; font-weight: 500; color: #999; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+.api-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+.api-input { flex: 1; padding: 8px 12px; font-size: 13px; font-family: inherit; border: 0.5px solid #ddd; border-radius: 8px; background: #fafafa; color: #1a1a1a; }
+.api-input:focus { outline: none; border-color: #999; }
+.kb-status { font-size: 12px; color: #999; }
+.kb-status.loaded { color: #0a6040; }
+.kb-status.error { color: #8b2020; }
+.notion-badge { display: inline-block; font-size: 11px; padding: 2px 8px; background: #f0f0ee; border-radius: 4px; color: #666; margin-left: 8px; }
+.progress-bar-bg { height: 4px; background: #eee; border-radius: 2px; margin: 12px 0; overflow: hidden; }
+.progress-bar-fill { height: 100%; background: #1a1a1a; border-radius: 2px; transition: width 0.3s ease; }
+.progress-label { font-size: 12px; color: #666; margin-bottom: 4px; }
+.results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.results-title { font-size: 16px; font-weight: 500; }
+.results-summary { font-size: 13px; color: #666; }
+.job-card { background: #fff; border: 0.5px solid #e0e0e0; border-radius: 12px; margin-bottom: 12px; overflow: hidden; }
+.job-card-header { padding: 1rem 1.25rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+.job-card-header:hover { background: #fafafa; }
+.job-title-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.job-title { font-size: 14px; font-weight: 500; }
+.job-company { font-size: 13px; color: #666; }
+.score-badge { font-size: 13px; font-weight: 500; padding: 3px 10px; border-radius: 20px; }
+.score-pass { background: #e1f5ee; color: #0a6040; }
+.score-fail { background: #fce8e8; color: #8b2020; }
+.score-applied { background: #f0f0ee; color: #666; }
+.chevron { font-size: 12px; color: #999; transition: transform 0.2s; }
+.chevron.open { transform: rotate(180deg); }
+.job-card-body { display: none; border-top: 0.5px solid #f0f0f0; }
+.job-card-body.open { display: block; }
+.tabs { display: flex; gap: 6px; padding: 12px 1.25rem 0; border-bottom: 0.5px solid #f0f0f0; flex-wrap: wrap; }
+.tab { padding: 5px 12px; border: 0.5px solid #ddd; border-radius: 20px; font-size: 12px; cursor: pointer; background: #fff; color: #666; margin-bottom: 12px; }
+.tab.active { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+.tab-content { padding: 1.25rem; display: none; }
+.tab-content.active { display: block; }
+.dim-block { margin-bottom: 12px; }
+.dim-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; }
+.dim-name { font-size: 12px; color: #444; }
+.dim-weight { font-size: 10px; color: #999; }
+.dim-score-num { font-size: 12px; font-weight: 500; }
+.bar-bg { height: 4px; background: #eee; border-radius: 2px; overflow: hidden; margin-bottom: 3px; }
+.bar-fill { height: 100%; border-radius: 2px; }
+.dim-reasoning { font-size: 11px; color: #777; line-height: 1.5; }
+.resume-box { font-size: 11px; font-family: 'Courier New', monospace; white-space: pre-wrap; background: #f8f8f6; padding: 14px; border-radius: 8px; line-height: 1.7; color: #1a1a1a; max-height: 580px; overflow-y: auto; border: 0.5px solid #e8e8e8; }
+.field-entry { margin-bottom: 18px; }
+.field-role { font-size: 12px; font-weight: 500; color: #1a1a1a; margin-bottom: 4px; }
+.field-text { font-size: 12px; color: #444; line-height: 1.6; background: #f8f8f6; padding: 10px 12px; border-radius: 6px; border: 0.5px solid #e8e8e8; }
+.physics-map { font-size: 13px; color: #444; line-height: 1.7; background: #f0f5ff; padding: 14px; border-radius: 8px; border-left: 3px solid #4a80d4; }
+.comm-map { font-size: 13px; color: #444; line-height: 1.7; background: #f5f0ff; padding: 14px; border-radius: 8px; border-left: 3px solid #8a4ad4; }
+.def-item { margin-bottom: 12px; padding: 10px 12px; border-radius: 8px; }
+.def-low { background: #e1f5ee; border-left: 3px solid #1a9e6e; }
+.def-med { background: #fef9e7; border-left: 3px solid #d4880a; }
+.def-high { background: #fce8e8; border-left: 3px solid #c0392b; }
+.def-bullet { font-size: 12px; font-weight: 500; color: #1a1a1a; margin-bottom: 4px; }
+.def-risk { font-size: 11px; font-weight: 500; margin-bottom: 3px; }
+.def-low .def-risk { color: #0a6040; }
+.def-med .def-risk { color: #8b5e0a; }
+.def-high .def-risk { color: #8b2020; }
+.def-brief { font-size: 11px; color: #555; line-height: 1.5; }
+.copy-btn { font-size: 11px; padding: 3px 8px; float: right; margin-bottom: 6px; }
+.overall-big { font-size: 36px; font-weight: 500; }
+.overall-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 14px; }
+#results-section { display: none; }
+.processing-card { background: #fff; border: 0.5px solid #e0e0e0; border-radius: 12px; padding: 1.25rem; margin-bottom: 14px; }
+.fail-card { background: #fff; border: 0.5px solid #f0d0d0; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+.fail-reason { font-size: 12px; color: #888; }
 </style>
 </head>
 <body>
 <div class="container">
-  <h1>Vishnu JR <span class="notion-badge">Live from Notion</span></h1>
-  <p class="subtitle">Scores job postings against your live Notion knowledge base. Generates a tailored resume if match is above 70%. Updates you type are saved back to Notion automatically.</p>
 
-  <div class="card">
-    <div class="section-label">Anthropic API key</div>
-    <div class="api-row">
-      <input type="password" class="api-input" id="apiKey" placeholder="sk-ant-..." />
-      <button onclick="saveKey()">Save</button>
-      <span id="keySaved" style="font-size:12px;color:#0a6040;display:none">Saved</span>
-    </div>
-    <p style="font-size:12px;color:#999">Stored in your browser only. Never sent anywhere except Anthropic's API.</p>
+<h1>Vishnu JR <span class="notion-badge">Batch Mode</span></h1>
+<p class="subtitle">Paste up to 20 job postings separated by --- on its own line. The agent processes them overnight using Claude Opus, scores each across 7 dimensions, and generates complete application packages for roles that pass 70%. Results persist across browser sessions.</p>
+
+<div class="card">
+  <div class="section-label">Anthropic API key</div>
+  <div class="api-row">
+    <input type="password" class="api-input" id="apiKey" placeholder="sk-ant-..." />
+    <button onclick="saveKey()">Save</button>
+    <span id="keySaved" style="font-size:12px;color:#0a6040;display:none">Saved</span>
   </div>
+  <p style="font-size:12px;color:#999">Stored in your browser only. Uses Claude Opus for maximum quality.</p>
+</div>
 
-  <div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-      <div class="section-label" style="margin:0">Knowledge base</div>
-      <button onclick="loadKnowledge()" style="font-size:12px;padding:4px 10px">Refresh from Notion</button>
-    </div>
-    <div id="kbStatus" class="kb-status">Not loaded yet.</div>
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+    <div class="section-label" style="margin:0">Knowledge base</div>
+    <button onclick="loadKnowledge()" style="font-size:12px;padding:4px 10px">Refresh from Notion</button>
   </div>
+  <div id="kbStatus" class="kb-status">Not loaded.</div>
+</div>
 
-  <div class="card">
-    <label for="updateInput">Session update (optional)</label>
-    <textarea id="updateInput" placeholder="New skills learned, applications submitted, contacts made, project updates. Saved to Notion automatically when you analyze."></textarea>
-  </div>
+<div class="card">
+  <label for="batchInput">Job postings — paste up to 20, separated by --- on its own line</label>
+  <textarea id="batchInput" placeholder="Paste job posting 1 here...
 
-  <div class="card">
-    <label for="jobInput">Job posting</label>
-    <textarea id="jobInput" placeholder="Paste the full job posting here."></textarea>
-    <div class="btn-row">
-      <button class="primary" id="runBtn" onclick="runAgent()">Analyze posting</button>
-      <button onclick="clearAll()">Clear</button>
-      <span id="spinner" style="display:none"><span class="spinner"></span></span>
-      <span id="statusMsg" class="status-msg"></span>
-    </div>
-  </div>
+---
 
-  <div id="results">
-    <div class="tabs">
-      <button class="tab active" onclick="showTab('scoring',this)">Score breakdown</button>
-      <button class="tab" onclick="showTab('resume',this)">Tailored resume</button>
-      <button class="tab" onclick="showTab('strategy',this)">Strategy notes</button>
-    </div>
-    <div id="tab-scoring" class="card">
-      <div class="overall-row">
-        <span class="overall-num" id="overallScore">--</span>
-        <span class="overall-label">/ 100 match score</span>
-      </div>
-      <span id="verdictBox" class="verdict"></span>
-      <div id="dimRows" style="margin-top:20px"></div>
-    </div>
-    <div id="tab-resume" class="card" style="display:none">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-        <span style="font-size:15px;font-weight:500">Tailored resume</span>
-        <button style="font-size:12px;padding:4px 10px" onclick="copyResume()">Copy</button>
-      </div>
-      <div class="resume-box" id="resumeOut"></div>
-    </div>
-    <div id="tab-strategy" class="card" style="display:none">
-      <div style="font-size:15px;font-weight:500;margin-bottom:14px">Tailoring strategy</div>
-      <div id="strategyOut"></div>
-    </div>
+Paste job posting 2 here...
+
+---
+
+Paste job posting 3 here..."></textarea>
+  <div class="btn-row">
+    <button class="primary" id="runBtn" onclick="runBatch()">Process all postings</button>
+    <button onclick="clearBatch()">Clear input</button>
+    <button class="danger" onclick="clearResults()">Clear saved results</button>
+    <span id="spinner" style="display:none"><span class="spinner"></span></span>
+    <span id="statusMsg" class="status-msg"></span>
   </div>
 </div>
 
+<div id="processing-section" style="display:none">
+  <div class="processing-card">
+    <div class="progress-label" id="progressLabel">Processing...</div>
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressBar" style="width:0%"></div></div>
+    <div style="font-size:12px;color:#999;margin-top:6px" id="progressDetail"></div>
+  </div>
+</div>
+
+<div id="results-section">
+  <div class="results-header">
+    <div>
+      <div class="results-title">Results</div>
+      <div class="results-summary" id="resultsSummary"></div>
+    </div>
+    <div style="font-size:12px;color:#999" id="resultsTimestamp"></div>
+  </div>
+  <div id="passingResults"></div>
+  <div id="failingResults" style="margin-top:16px"></div>
+</div>
+
+</div>
 <script>
 const WORKER_URL = "https://vishnujr.vishnu-c5c.workers.dev";
 
-const SYSTEM_PROMPT_BASE = `You are Vishnu Murthy's personal career intelligence agent. Use the knowledge base and session updates provided to score job postings and generate tailored resumes.
+const SYSTEM_PROMPT = `You are Vishnu Murthy's personal career intelligence agent. You have deep knowledge of his full professional profile provided in the knowledge base. Your job is to score job postings and generate complete application packages.
 
-SCORING RUBRIC — six dimensions, weighted average, threshold 70/100:
+=== SCORING — 7 DIMENSIONS, WEIGHTED AVERAGE, THRESHOLD 70 ===
 
-D1 Technical skills overlap (30%):
-90-100: Direct match — optical inspection, metrology, laser systems, darkfield physics, Hopkins/TCC theory
+D1 Technical skills overlap (25%):
+90-100: Direct match — optical inspection, metrology, laser systems, darkfield physics, Hopkins/TCC
 70-89: Strong adjacent — photonics, optical engineering, precision measurement
 50-69: Moderate — general physics, some optics
 30-49: Weak — EE, mechanical, adjacent but different
-0-29: No match — power electronics, embedded systems, GaAs etch, software only
+0-29: No match — power electronics, embedded systems, GaAs etch, pure software
 
 D2 Experience level fit (20%):
-90-100: BS + 0-2 years explicitly acceptable or equivalent work experience language
+90-100: BS + 0-2 years explicitly OK or equivalent work experience language
 70-89: BS + 2 years required, medical device plus research makes equivalent case
 50-69: MS preferred but BS considered
 30-49: MS/PhD required, hard structural barrier
 0-29: PhD required or active security clearance needed
 
-D3 Location acceptability (15%):
+D3 Location acceptability (12%):
 100: Phoenix AZ, Chandler AZ, Waltham/Boston MA, Wilmington MA
 85: Bay Area CA, Oregon, Connecticut, New York, Texas
 70: Midwest, Southeast, other US
 40: Boise ID
 0: Singapore, Germany, international relocation
 
-D4 Career trajectory alignment (20%):
+D4 Career trajectory alignment (18%):
 90-100: Direct path — KLA TSE, Onto Innovation AE, ASML CSE, Applied Materials, Halo Industries optics
 70-89: Strong adjacent — photonics R&D, laser systems engineering
 50-69: Acceptable bridge — Candela RA, medical device regulatory, general optical engineering
@@ -161,48 +194,139 @@ D4 Career trajectory alignment (20%):
 
 D5 Qualification barrier (10%):
 100: No hard blockers, BS accessible
-70: Stretch but manageable with cover letter
+70: Stretch but manageable with cover letter argument
 30: MS strongly preferred
-0: Active security clearance, PhD mandatory, eligibility mismatch
+0: Active security clearance, PhD mandatory, graduating senior for sophomore/junior intern eligibility mismatch
 
 D6 Company tier and strategic value (5%):
 90-100: KLA, ASML, Applied Materials, Onto Innovation, Nvidia, Halo Industries
-70-89: Lumentum, Coherent, Candela, Micron, Intel, ZEISS
-50-69: General semiconductor, photonics startups, medical device
-0-29: Unrelated
+70-89: Lumentum, Coherent, Candela Medical, Micron, Intel, ZEISS
+50-69: General semiconductor, photonics startups, medical device companies
+0-29: Unrelated industries
 
-SPECIAL RULE: Regulatory affairs at medical device companies score minimum 65 in D4 if full-time conversion is realistic.
+D7 Communication and professional development value (10%):
+90-100: Regulatory affairs, applications engineering, customer-facing field roles, cross-functional roles with senior stakeholder interaction, heavy meeting and documentation exposure — directly addresses Vishnu's stated priority of developing corporate communication skills
+70-89: R&D with cross-functional collaboration, technical writing heavy, customer interaction component
+50-69: Lab or simulation with some team interaction
+30-49: Mostly individual contributor, limited communication development
+0-29: Purely heads-down with no communication development value
 
-RESUME RULES (NON-NEGOTIABLE):
+SPECIAL RULES:
+- Regulatory affairs at medical device companies: score minimum 65 in D4 if full-time conversion is realistic AND minimum 85 in D7 — financial independence plus communication development justifies this bridge
+- Already applied roles: note this and do not generate resume
+
+=== RESUME RULES (NON-NEGOTIABLE) ===
 1. One page maximum
 2. No em dashes — use commas or semicolons
 3. No "directly analogous" more than once
-4. Every claim defensible in an interview
+4. Every claim defensible under technical interview scrutiny
 5. No microswimmer thesis line
-6. Semiconductor/TSE/field service roles: use semiconductor-facing Candela bullets (BKM/field service escalation framing)
-7. Medical device/R&D/photonics roles: use R&D-facing Candela bullets (Arrhenius/chromophore/multi-physics framing)
+6. Semiconductor/TSE/field service roles: use semiconductor-facing Candela bullets with BKM/field service escalation framing
+7. Medical device/R&D/photonics/regulatory roles: use R&D-facing Candela bullets with Arrhenius/chromophore/multi-physics framing
 8. SNR written as >= 3
 9. Remove location from header for relocation roles
-10. Do not generate resume if already applied
+10. Do not include TA or NSF REU unless space allows and role benefits from teaching/communication credential
 
-OUTPUT — return ONLY valid JSON, no markdown fences:
+=== DEFENSIBILITY TIERS ===
+READY NOW: Vishnu can defend this cold today with no additional preparation
+PREPARATION PATH: Genuine physics or domain connection exists, can close gap in 1-5 days of focused study — include specific what-to-study brief
+GENUINE GAP: No physics connection, reframe or remove from resume
+
+=== MASTER RESUME CONTENT ===
+
+HEADER: Vishnu Murthy | US Citizen | +1 781-458-9802 | vishnu@brandeis.edu | linkedin.com/in/vishnusmurthy
+
+EDUCATION: Brandeis University, Waltham MA | B.S. with Honors in Physics and Biological Physics | Aug 2022 - May 2026 | Focus: Optical Systems for Semiconductor Wafer Inspection | Minors: Mathematics, History
+
+TIBERI GROUP BULLETS (semiconductor-facing):
+- Built a partially coherent optical inspection simulator from first principles using Hopkins/TCC imaging theory, modeling how illumination geometry, including oblique off-axis configurations analogous to darkfield laser scanner physics, affects defect contrast, defect signal, and resolution on patterned wafers (wavelength 266nm, NA 0.9).
+- Optimized illumination geometry through systematic parameter characterization to maximize defect detection sensitivity, achieving 45% contrast improvement for dense features at 250nm pitch; managed diffraction order collection in the pupil plane to isolate defect signal from background noise across coherence conditions and source configurations.
+- Conducted four structured characterization experiments: resolution limit mapping across coherence conditions, CD measurement accuracy for sub-wavelength features (100nm pitch), illumination recipe optimization, and defect detection sensitivity analysis (bridge, break, particle, void) with SNR-based detectability thresholds; experimental design followed the structure of tool qualification and process monitoring procedures used in production semiconductor fabs.
+- Developed a difference-imaging defect detection pipeline with quantitative SNR >= 3 detection thresholds across varying defect sizes and illumination recipes, implementing the die-to-die comparison methodology used in production patterned wafer inspection systems, including KLA's Puma laser scanner platform.
+
+PHYS 98B: Designing an optical inspection system for inline defect detection in battery electrode manufacturing using Zemax ray-tracing simulation; optimizing illumination geometry and optical configuration for surface defect contrast enhancement in high-volume roll-to-roll processing environments.
+
+CANDELA (semiconductor/TSE-facing):
+- Developed an integrated optical-thermal simulation framework (Monte Carlo, COMSOL, Zemax) for characterization of laser-based IPL devices; performed systematic parameter sweeps to quantify energy deposition, optical alignment sensitivity, spatiotemporal heating, and damage thresholds across device configurations.
+- Produced best-known-methods (BKMs), application notes, and technical documentation recording simulation-validated design recommendations for energy-boosted handpieces (PR 530); experience writing structured diagnostic and corrective-action documentation under high-stakes conditions, including FDA regulatory submissions, directly applicable to field service escalation reporting.
+- Implemented spectrally resolved absorption models for chromophore targeting; produced spectrum-weighted fluence distributions informing design decisions and clinical use case optimization across multiple product configurations.
+
+CANDELA (R&D/medical device/regulatory-facing):
+- Developed an integrated multi-physics simulation framework combining Monte Carlo photon transport, COMSOL Multiphysics, and Zemax OpticStudio to model Intense Pulsed Light tissue interactions for the Nordlys platform; built spectrally resolved chromophore absorption models for hemoglobin and melanin to generate wavelength-weighted fluence distributions and tissue response predictions.
+- Performed systematic parameter sweeps across pulse duration, fluence, cooling conditions, and spectral emission profiles to quantify spatiotemporal heat deposition and Arrhenius-based tissue damage thresholds; implemented distributed ODE damage modeling in COMSOL to evaluate single pulse, pulse train, and subpulse burst strategies for the PR 530 energy-boosted handpiece.
+- Collaborated with regulatory affairs to translate multi-physics simulation results into actionable design guidance; deliverables included damage threshold analysis, pulse optimization recommendations, and energy safety documentation supporting FDA-aligned validation workflows.
+
+BASKARAN:
+- Modeled bacterial chemotaxis using nonlinear PDE frameworks (Fisher-KPP, Keller-Segel); built Python numerical solver implementing finite-difference (FTCS, Lax) and spectral (FFT) methods for traveling wave simulations.
+- Conducted parameter sweeps and phase diagram analysis to map pattern regimes; tested robustness of emergent spatiotemporal patterns across varying initial conditions.
+
+YEVICK: Received formal training on Tundra Cryo-TEM, Tecnai F20, and FEI Morgagni electron microscopes at the Brandeis Electron Microscopy Facility; conducted confocal fluorescence microscopy experiments; developed 1D PDE model for calcium signaling dynamics in retinal pigment epithelial cells.
+
+SKILLS:
+Programming: Python (NumPy, SciPy, Matplotlib, Pandas), MATLAB, Wolfram Mathematica, LaTeX, Excel, JMP
+Simulation: COMSOL Multiphysics, Zemax OpticStudio, Monte Carlo modeling
+Domain: Partially Coherent Imaging, Hopkins/TCC Theory, Darkfield and Brightfield Inspection Physics, Optical Alignment and Characterization, Defect Inspection, Difference Imaging, Optical Metrology (CD, MTF, Contrast), Semiconductor Wafer Inspection, Illumination Optimization
+Documentation: BKM generation, application notes, field service escalation reports, technical presentations, cross-functional collaboration
+R&D: DOE Design and Analysis, Failure Analysis, Root Cause Identification, Data Analysis and Visualization
+
+AWARDS: Dean's Merit Scholarship ($10,500/year), Brandeis Cricket Club (Founder and President), Brandeis Quant Club (Project Lead, Officer)
+
+=== MANUAL WORKDAY FIELD ENTRIES (PROSE FORMAT) ===
+
+Generate role-specific prose entries for each work experience. These go into Workday manual fields. They should be 3-5 sentences per role, written in first person, using the role's vocabulary where Vishnu has genuine claim. Do not use bullet points in these entries — prose only.
+
+Tiberi Group entry: Connect Hopkins simulator to the specific technical problems of the target role. For optical inspection and TSE roles emphasize darkfield physics, tool qualification structure, die-to-die methodology. For lithography roles emphasize aerial image contrast, process window, illumination optimization. For metrology roles emphasize CD accuracy, systematic characterization, SNR thresholds.
+
+Candela entry: For semiconductor roles emphasize optical alignment sensitivity characterization, systematic DOE parameter sweeps, BKM and corrective-action documentation applicable to field service. For medical device roles emphasize multi-physics simulation depth, Arrhenius modeling, spectrally resolved chromophore physics, regulatory affairs collaboration. Always mention COMSOL, Monte Carlo, and Zemax by name.
+
+Baskaran entry: Emphasize Python numerical solver, systematic parameter sweep methodology, quantitative analysis. Keep brief — 2-3 sentences. Connect to data analysis and systematic problem-solving applicable to the target role.
+
+Yevick entry: Emphasize formal TEM training on named instruments, confocal microscopy, precision imaging instrumentation experience. 2 sentences maximum. Frame as hands-on precision instrument experience where relevant.
+
+=== OUTPUT FORMAT ===
+
+Return ONLY valid JSON, no markdown fences, no preamble:
+
 {
-  "overall": <integer>,
+  "role_title": "<job title extracted from posting>",
+  "company": "<company name>",
+  "location": "<location>",
+  "overall": <integer 0-100>,
   "pass": <boolean>,
   "already_applied": <boolean>,
   "dimensions": [
-    {"name": "Technical skills overlap", "weight": 30, "score": <int>, "reasoning": "<2 sentences>"},
+    {"name": "Technical skills overlap", "weight": 25, "score": <int>, "reasoning": "<2 sentences>"},
     {"name": "Experience level fit", "weight": 20, "score": <int>, "reasoning": "<2 sentences>"},
-    {"name": "Location acceptability", "weight": 15, "score": <int>, "reasoning": "<2 sentences>"},
-    {"name": "Career trajectory alignment", "weight": 20, "score": <int>, "reasoning": "<2 sentences>"},
+    {"name": "Location acceptability", "weight": 12, "score": <int>, "reasoning": "<2 sentences>"},
+    {"name": "Career trajectory alignment", "weight": 18, "score": <int>, "reasoning": "<2 sentences>"},
     {"name": "Qualification barrier", "weight": 10, "score": <int>, "reasoning": "<2 sentences>"},
-    {"name": "Company tier and strategic value", "weight": 5, "score": <int>, "reasoning": "<2 sentences>"}
+    {"name": "Company tier and strategic value", "weight": 5, "score": <int>, "reasoning": "<2 sentences>"},
+    {"name": "Communication and professional development value", "weight": 10, "score": <int>, "reasoning": "<2 sentences>"}
   ],
-  "resume": "<tailored one-page resume as plain text, empty string if not applicable>",
-  "strategy": "<bullet points for tailoring decisions, rejection reason, or already-applied note>"
+  "resume": "<full tailored one-page resume as plain text following all rules — empty string if not applicable>",
+  "manual_fields": {
+    "tiberi": "<role-specific prose entry for Tiberi Group Workday field, 3-5 sentences, first person>",
+    "candela": "<role-specific prose entry for Candela Medical Workday field, 3-5 sentences, first person>",
+    "baskaran": "<role-specific prose entry for Baskaran Group Workday field, 2-3 sentences, first person>",
+    "yevick": "<role-specific prose entry for Yevick Laboratory Workday field, 2 sentences, first person>"
+  },
+  "physics_connection": "<2-3 paragraph explanation of the genuine underlying physics or domain connection between Vishnu's Hopkins/Candela work and the core technical problems this role solves every day. Be specific about which physics concepts transfer and why. This should help Vishnu articulate his fit in a cover letter or opening interview answer. If connection is weak, say so honestly.>",
+  "communication_map": "<2 paragraph explanation of how this specific role develops corporate communication skills. What meetings would Vishnu be in? What types of stakeholders? What documentation? What soft skill gaps does this role specifically address? If communication development value is low, note that honestly.>",
+  "defensibility": [
+    {
+      "bullet": "<exact bullet text from the tailored resume>",
+      "tier": "<READY NOW or PREPARATION PATH or GENUINE GAP>",
+      "probe_question": "<the exact question a technical interviewer would ask to probe this claim>",
+      "honest_answer": "<what Vishnu's honest answer should be — what he actually knows and how to frame the boundary>",
+      "study_brief": "<ONLY if tier is PREPARATION PATH: exactly what to read or study, how long it would take, what the physics connection is>"
+    }
+  ],
+  "rejection_reason": "<if pass is false: brief explanation of why this role was filtered out>"
 }`;
 
 let cachedKnowledge = null;
+let results = [];
+let isProcessing = false;
 
 function saveKey() {
   const k = document.getElementById('apiKey').value.trim();
@@ -213,6 +337,7 @@ window.onload = () => {
   const saved = localStorage.getItem('vm_api_key');
   if (saved) document.getElementById('apiKey').value = saved;
   loadKnowledge();
+  loadSavedResults();
 };
 
 async function loadKnowledge() {
@@ -229,73 +354,251 @@ async function loadKnowledge() {
   } catch(e) { el.textContent = 'Failed: ' + e.message; el.className='kb-status error'; }
 }
 
-async function saveUpdateToNotion(text) {
-  if (!text.trim()) return;
-  try { await fetch(`${WORKER_URL}/update`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({update:text}) }); } catch(e) { console.warn(e); }
+function loadSavedResults() {
+  const saved = localStorage.getItem('vj_results');
+  if (saved) {
+    try {
+      const data = JSON.parse(saved);
+      results = data.results || [];
+      if (results.length > 0) renderResults(data.timestamp);
+    } catch(e) {}
+  }
 }
 
-async function runAgent() {
+function saveResultsToStorage(timestamp) {
+  localStorage.setItem('vj_results', JSON.stringify({ results, timestamp }));
+}
+
+async function runBatch() {
+  if (isProcessing) return;
   const apiKey = document.getElementById('apiKey').value.trim() || localStorage.getItem('vm_api_key');
   if (!apiKey) { alert('Enter your Anthropic API key first.'); return; }
-  const posting = document.getElementById('jobInput').value.trim();
-  if (!posting) { alert('Paste a job posting.'); return; }
-  const updates = document.getElementById('updateInput').value.trim();
-  const btn = document.getElementById('runBtn');
-  const spinner = document.getElementById('spinner');
-  const status = document.getElementById('statusMsg');
-  btn.disabled=true; spinner.style.display='inline-block'; document.getElementById('results').style.display='none';
-  if (!cachedKnowledge) { status.textContent='Loading Notion...'; await loadKnowledge(); }
-  if (updates) { status.textContent='Saving to Notion...'; await saveUpdateToNotion(updates); }
-  status.textContent='Scoring...';
-  const systemPrompt = SYSTEM_PROMPT_BASE + '\n\n=== KNOWLEDGE BASE ===\n' + (cachedKnowledge||'') + (updates ? '\n\n=== SESSION UPDATES ===\n' + updates : '');
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST',
-      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:4096,system:systemPrompt,messages:[{role:'user',content:'Analyze this job posting:\n\n'+posting}]})
-    });
-    const data = await res.json();
-    if (data.error) { status.textContent='API error: '+data.error.message; return; }
-    const text = data.content?.find(b=>b.type==='text')?.text||'';
-    let parsed;
-    try { parsed = JSON.parse(text.replace(/```json|```/g,'').trim()); } catch { status.textContent='Parse error. Try again.'; console.error(text); return; }
-    renderResults(parsed); status.textContent='';
-  } catch(e) { status.textContent='Network error: '+e.message; } finally { btn.disabled=false; spinner.style.display='none'; }
+  const batchText = document.getElementById('batchInput').value.trim();
+  if (!batchText) { alert('Paste job postings first.'); return; }
+  if (!cachedKnowledge) { await loadKnowledge(); }
+  if (!cachedKnowledge) { alert('Could not load knowledge base from Notion.'); return; }
+
+  const postings = batchText.split(/\n---\n/).map(p => p.trim()).filter(p => p.length > 50);
+  if (postings.length === 0) { alert('No valid job postings found. Separate postings with --- on its own line.'); return; }
+
+  isProcessing = true;
+  results = [];
+  document.getElementById('runBtn').disabled = true;
+  document.getElementById('processing-section').style.display = 'block';
+  document.getElementById('results-section').style.display = 'none';
+  document.getElementById('statusMsg').textContent = '';
+
+  const timestamp = new Date().toLocaleString();
+
+  for (let i = 0; i < postings.length; i++) {
+    const posting = postings[i];
+    document.getElementById('progressLabel').textContent = `Processing ${i+1} of ${postings.length}...`;
+    document.getElementById('progressBar').style.width = `${Math.round(((i) / postings.length) * 100)}%`;
+    document.getElementById('progressDetail').textContent = `Analyzing posting ${i+1}. ${postings.length - i - 1} remaining after this.`;
+
+    try {
+      const result = await analyzePosting(posting, apiKey);
+      result._raw = posting;
+      results.push(result);
+      saveResultsToStorage(timestamp);
+    } catch(e) {
+      results.push({ role_title: `Posting ${i+1}`, company: 'Unknown', location: '', overall: 0, pass: false, rejection_reason: 'Processing error: ' + e.message, _raw: posting });
+      saveResultsToStorage(timestamp);
+    }
+
+    await new Promise(r => setTimeout(r, 800));
+  }
+
+  document.getElementById('progressBar').style.width = '100%';
+  document.getElementById('progressLabel').textContent = `Complete — ${postings.length} postings processed`;
+  document.getElementById('processing-section').style.display = 'none';
+  renderResults(timestamp);
+  isProcessing = false;
+  document.getElementById('runBtn').disabled = false;
 }
 
-function renderResults(d) {
-  document.getElementById('results').style.display='block';
-  document.getElementById('overallScore').textContent=Math.round(d.overall);
-  const vbox=document.getElementById('verdictBox');
-  if (d.already_applied) { vbox.className='verdict verdict-applied'; vbox.textContent='Already applied to this role'; }
-  else if (d.pass) { vbox.className='verdict verdict-pass'; vbox.textContent='Pass — tailored resume generated'; }
-  else { vbox.className='verdict verdict-fail'; vbox.textContent='Below 70% threshold — resume not generated'; }
-  const rows=document.getElementById('dimRows'); rows.innerHTML='';
-  (d.dimensions||[]).forEach(dim=>{
-    const s=Math.round(dim.score), color=s>=70?'#1a9e6e':s>=50?'#d4880a':'#c0392b';
-    rows.innerHTML+=`<div class="dim-block"><div class="dim-header"><span class="dim-name">${dim.name} <span class="dim-weight">(${dim.weight}%)</span></span><span class="dim-score" style="color:${color}">${s}</span></div><div class="bar-bg"><div class="bar-fill" style="width:${s}%;background:${color}"></div></div><div class="dim-reasoning">${dim.reasoning}</div></div>`;
+async function analyzePosting(posting, apiKey) {
+  const systemPrompt = SYSTEM_PROMPT + '\n\n=== LIVE KNOWLEDGE BASE FROM NOTION ===\n' + cachedKnowledge;
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+    body: JSON.stringify({
+      model: 'claude-opus-4-5-20251001',
+      max_tokens: 8000,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: 'Analyze this job posting and return the complete JSON package:\n\n' + posting }]
+    })
   });
-  document.getElementById('resumeOut').textContent = (d.pass&&!d.already_applied&&d.resume) ? d.resume : (d.already_applied?'Already applied.':'Score below 70%.');
-  const stratOut=document.getElementById('strategyOut'); stratOut.innerHTML='';
-  if (d.strategy) d.strategy.split('\n').filter(l=>l.trim()).forEach(line=>{ const div=document.createElement('div'); div.className='strategy-item'; div.textContent=line.replace(/^[-*]\s*/,''); stratOut.appendChild(div); });
-  showTab('scoring',document.querySelector('.tab'));
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message);
+  const text = data.content?.find(b => b.type === 'text')?.text || '';
+  return JSON.parse(text.replace(/```json|```/g, '').trim());
 }
 
-function showTab(tab,btn) {
-  ['scoring','resume','strategy'].forEach(t=>document.getElementById('tab-'+t).style.display=t===tab?'block':'none');
-  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
-  if(btn)btn.classList.add('active');
+function renderResults(timestamp) {
+  document.getElementById('results-section').style.display = 'block';
+  const passing = results.filter(r => r.pass && !r.already_applied);
+  const applied = results.filter(r => r.already_applied);
+  const failing = results.filter(r => !r.pass && !r.already_applied);
+  document.getElementById('resultsSummary').textContent = `${passing.length} passing, ${failing.length} filtered out, ${applied.length} already applied — ${results.length} total`;
+  document.getElementById('resultsTimestamp').textContent = 'Processed ' + timestamp;
+
+  const passingEl = document.getElementById('passingResults');
+  passingEl.innerHTML = '';
+  if (passing.length > 0) {
+    const h = document.createElement('div');
+    h.style.cssText = 'font-size:13px;font-weight:500;color:#0a6040;margin-bottom:10px;';
+    h.textContent = `${passing.length} roles worth pursuing`;
+    passingEl.appendChild(h);
+    passing.forEach((r, i) => passingEl.appendChild(buildJobCard(r, 'pass')));
+  }
+
+  const failingEl = document.getElementById('failingResults');
+  failingEl.innerHTML = '';
+  if (failing.length > 0 || applied.length > 0) {
+    const h = document.createElement('div');
+    h.style.cssText = 'font-size:13px;font-weight:500;color:#888;margin-bottom:10px;';
+    h.textContent = 'Filtered out';
+    failingEl.appendChild(h);
+    [...failing, ...applied].forEach(r => {
+      const card = document.createElement('div');
+      card.className = 'fail-card';
+      card.innerHTML = `<div><span style="font-size:13px;font-weight:500">${r.role_title || 'Unknown role'}</span> <span style="font-size:12px;color:#888">— ${r.company || ''}</span></div><div class="fail-reason">${r.already_applied ? 'Already applied' : (r.rejection_reason || 'Score: ' + Math.round(r.overall||0))}</div>`;
+      failingEl.appendChild(card);
+    });
+  }
 }
 
-function copyResume() {
-  navigator.clipboard.writeText(document.getElementById('resumeOut').textContent).then(()=>{event.target.textContent='Copied';setTimeout(()=>event.target.textContent='Copy',1500);});
+function buildJobCard(r, type) {
+  const card = document.createElement('div');
+  card.className = 'job-card';
+  const score = Math.round(r.overall || 0);
+  const badgeClass = r.already_applied ? 'score-applied' : (r.pass ? 'score-pass' : 'score-fail');
+  const badgeText = r.already_applied ? 'Applied' : score + '/100';
+
+  card.innerHTML = `
+    <div class="job-card-header" onclick="toggleCard(this)">
+      <div class="job-title-row">
+        <span class="job-title">${r.role_title || 'Unknown role'}</span>
+        <span class="job-company">${r.company || ''}${r.location ? ' — ' + r.location : ''}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="score-badge ${badgeClass}">${badgeText}</span>
+        <span class="chevron">▼</span>
+      </div>
+    </div>
+    <div class="job-card-body">
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab(this,'scoring')">Score</button>
+        <button class="tab" onclick="switchTab(this,'resume')">Resume</button>
+        <button class="tab" onclick="switchTab(this,'fields')">Workday fields</button>
+        <button class="tab" onclick="switchTab(this,'physics')">Physics map</button>
+        <button class="tab" onclick="switchTab(this,'comm')">Comm map</button>
+        <button class="tab" onclick="switchTab(this,'defense')">Defensibility</button>
+      </div>
+      <div class="tab-content active" data-tab="scoring">${buildScoringTab(r)}</div>
+      <div class="tab-content" data-tab="resume">${buildResumeTab(r)}</div>
+      <div class="tab-content" data-tab="fields">${buildFieldsTab(r)}</div>
+      <div class="tab-content" data-tab="physics">${buildPhysicsTab(r)}</div>
+      <div class="tab-content" data-tab="comm">${buildCommTab(r)}</div>
+      <div class="tab-content" data-tab="defense">${buildDefenseTab(r)}</div>
+    </div>`;
+  return card;
 }
 
-function clearAll() {
-  document.getElementById('jobInput').value='';
-  document.getElementById('updateInput').value='';
-  document.getElementById('results').style.display='none';
-  document.getElementById('statusMsg').textContent='';
+function buildScoringTab(r) {
+  const score = Math.round(r.overall || 0);
+  let html = `<div class="overall-row"><span class="overall-big">${score}</span><span style="font-size:14px;color:#666">/ 100 overall match</span></div>`;
+  (r.dimensions || []).forEach(d => {
+    const s = Math.round(d.score || 0);
+    const color = s >= 70 ? '#1a9e6e' : s >= 50 ? '#d4880a' : '#c0392b';
+    html += `<div class="dim-block"><div class="dim-header"><span class="dim-name">${d.name} <span class="dim-weight">(${d.weight}%)</span></span><span class="dim-score-num" style="color:${color}">${s}</span></div><div class="bar-bg"><div class="bar-fill" style="width:${s}%;background:${color}"></div></div><div class="dim-reasoning">${d.reasoning || ''}</div></div>`;
+  });
+  return html;
+}
+
+function buildResumeTab(r) {
+  if (!r.resume) return '<p style="font-size:13px;color:#999;font-style:italic">No resume generated for this role.</p>';
+  return `<button class="copy-btn" onclick="copyText(this, \`${escapeForAttr(r.resume)}\`)">Copy</button><div class="resume-box">${escapeHtml(r.resume)}</div>`;
+}
+
+function buildFieldsTab(r) {
+  if (!r.manual_fields) return '<p style="font-size:13px;color:#999;font-style:italic">No manual fields generated.</p>';
+  const fields = [
+    { key: 'tiberi', label: 'Tiberi Group, Brandeis University' },
+    { key: 'candela', label: 'Candela Medical' },
+    { key: 'baskaran', label: 'Baskaran Research Group' },
+    { key: 'yevick', label: 'Yevick Laboratory' }
+  ];
+  return fields.map(f => {
+    const text = r.manual_fields[f.key] || '';
+    return `<div class="field-entry"><div class="field-role">${f.label}<button class="copy-btn" style="margin-left:8px" onclick="copyText(this, \`${escapeForAttr(text)}\`)">Copy</button></div><div class="field-text">${escapeHtml(text)}</div></div>`;
+  }).join('');
+}
+
+function buildPhysicsTab(r) {
+  if (!r.physics_connection) return '<p style="font-size:13px;color:#999;font-style:italic">No physics connection map generated.</p>';
+  return `<div class="physics-map">${escapeHtml(r.physics_connection).replace(/\n\n/g, '</div><div class="physics-map" style="margin-top:10px">')}</div>`;
+}
+
+function buildCommTab(r) {
+  if (!r.communication_map) return '<p style="font-size:13px;color:#999;font-style:italic">No communication map generated.</p>';
+  return `<div class="comm-map">${escapeHtml(r.communication_map).replace(/\n\n/g, '</div><div class="comm-map" style="margin-top:10px">')}</div>`;
+}
+
+function buildDefenseTab(r) {
+  if (!r.defensibility || r.defensibility.length === 0) return '<p style="font-size:13px;color:#999;font-style:italic">No defensibility assessment generated.</p>';
+  return r.defensibility.map(d => {
+    const tierClass = d.tier === 'READY NOW' ? 'def-low' : d.tier === 'PREPARATION PATH' ? 'def-med' : 'def-high';
+    const tierLabel = d.tier === 'READY NOW' ? 'Ready now — defend cold' : d.tier === 'PREPARATION PATH' ? 'Preparation path exists' : 'Genuine gap — reframe needed';
+    let html = `<div class="def-item ${tierClass}"><div class="def-bullet">${escapeHtml(d.bullet || '')}</div><div class="def-risk">${tierLabel}</div>`;
+    if (d.probe_question) html += `<div class="def-brief"><strong>Probe:</strong> ${escapeHtml(d.probe_question)}</div>`;
+    if (d.honest_answer) html += `<div class="def-brief" style="margin-top:4px"><strong>Your answer:</strong> ${escapeHtml(d.honest_answer)}</div>`;
+    if (d.study_brief) html += `<div class="def-brief" style="margin-top:4px;background:rgba(255,255,255,0.5);padding:6px;border-radius:4px"><strong>Study brief:</strong> ${escapeHtml(d.study_brief)}</div>`;
+    html += '</div>';
+    return html;
+  }).join('');
+}
+
+function toggleCard(header) {
+  const body = header.nextElementSibling;
+  const chevron = header.querySelector('.chevron');
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  chevron.classList.toggle('open', !isOpen);
+}
+
+function switchTab(btn, tabName) {
+  const card = btn.closest('.job-card-body');
+  card.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  card.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  card.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+}
+
+function copyText(btn, text) {
+  navigator.clipboard.writeText(text).then(() => { btn.textContent='Copied'; setTimeout(()=>btn.textContent='Copy',1500); });
+}
+
+function escapeHtml(str) {
+  return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function escapeForAttr(str) {
+  return (str||'').replace(/`/g,'\\`').replace(/\$/g,'\\$');
+}
+
+function clearBatch() {
+  document.getElementById('batchInput').value = '';
+}
+
+function clearResults() {
+  if (!confirm('Clear all saved results?')) return;
+  localStorage.removeItem('vj_results');
+  results = [];
+  document.getElementById('results-section').style.display = 'none';
+  document.getElementById('passingResults').innerHTML = '';
+  document.getElementById('failingResults').innerHTML = '';
 }
 </script>
 </body>
