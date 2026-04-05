@@ -98,15 +98,6 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 <h1>Vishnu JR <span class="notion-badge">Batch Mode</span></h1>
 <p class="subtitle">Paste up to 20 job postings separated by --- on its own line. The agent processes them overnight using Claude Opus, scores each across 7 dimensions, and generates complete application packages for roles that pass 70%. Results persist across browser sessions.</p>
 
-<div class="card">
-  <div class="section-label">Anthropic API key</div>
-  <div class="api-row">
-    <input type="password" class="api-input" id="apiKey" placeholder="sk-ant-..." />
-    <button onclick="saveKey()">Save</button>
-    <span id="keySaved" style="font-size:12px;color:#0a6040;display:none">Saved</span>
-  </div>
-  <p style="font-size:12px;color:#999">Stored in your browser only. Uses Claude Opus for maximum quality.</p>
-</div>
 
 <div class="card">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
@@ -419,9 +410,9 @@ async function runBatch() {
 
 async function analyzePosting(posting, apiKey) {
   const systemPrompt = SYSTEM_PROMPT + '\n\n=== LIVE KNOWLEDGE BASE FROM NOTION ===\n' + cachedKnowledge;
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+  const res = await fetch(`${WORKER_URL}/analyze`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: 'claude-opus-4-5-20251001',
       max_tokens: 8000,
