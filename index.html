@@ -405,7 +405,7 @@ async function analyzePosting(posting) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: 'claude-opus-4-5-20251001',
+      model: 'claude-opus-4-6',
       max_tokens: 8000,
       system: systemPrompt,
       messages: [{ role: 'user', content: 'Analyze this job posting and return the complete JSON package:\n\n' + posting }]
