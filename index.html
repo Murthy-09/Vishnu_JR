@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vishnu — Job Match Agent</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8f8f6; color: #1a1a1a; min-height: 100vh; }
+  .container { max-width: 860px; margin: 0 auto; padding: 2rem 1.5rem; }
+  h1 { font-size: 22px; font-weight: 500; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #666; margin-bottom: 2rem; }
+  .card { background: #fff; border: 0.5px solid #e0e0e0; border-radius: 12px; padding: 1.25rem; margin-bottom: 16px; }
+  label { font-size: 13px; color: #555; display: block; margin-bottom: 6px; font-weight: 500; }
+  textarea { width: 100%; padding: 10px 12px; font-size: 13px; font-family: inherit; border: 0.5px solid #ddd; border-radius: 8px; background: #fafafa; color: #1a1a1a; resize: vertical; line-height: 1.6; }
+  textarea:focus { outline: none; border-color: #999; background: #fff; }
+  #jobInput { min-height: 160px; }
+  #updateInput { min-height: 80px; }
+  .btn-row { display: flex; gap: 8px; margin-top: 12px; align-items: center; flex-wrap: wrap; }
+  button { padding: 8px 18px; border: 0.5px solid #ccc; border-radius: 8px; background: #fff; color: #1a1a1a; cursor: pointer; font-size: 13px; font-family: inherit; transition: background 0.15s; }
+  button:hover { background: #f0f0ee; }
+  button.primary { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+  button.primary:hover { background: #333; }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  .spinner { display: inline-block; width: 15px; height: 15px; border: 2px solid #ddd; border-top-color: #666; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .status-msg { font-size: 13px; color: #666; }
+  .tabs { display: flex; gap: 6px; margin-bottom: 16px; border-bottom: 0.5px solid #e0e0e0; padding-bottom: 12px; }
+  .tab { padding: 5px 14px; border: 0.5px solid #ddd; border-radius: 20px; font-size: 13px; cursor: pointer; background: #fff; color: #666; }
+  .tab.active { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+  .overall-row { display: flex; align-items: baseline; gap: 10px; margin-bottom: 16px; }
+  .overall-num { font-size: 42px; font-weight: 500; }
+  .overall-label { font-size: 14px; color: #666; }
+  .verdict { padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; margin-bottom: 20px; display: inline-block; }
+  .verdict-pass { background: #e1f5ee; color: #0a6040; }
+  .verdict-fail { background: #fce8e8; color: #8b2020; }
+  .dim-block { margin-bottom: 14px; }
+  .dim-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+  .dim-name { font-size: 13px; color: #444; }
+  .dim-weight { font-size: 11px; color: #999; }
+  .dim-score { font-size: 13px; font-weight: 500; }
+  .bar-bg { height: 5px; background: #eee; border-radius: 3px; overflow: hidden; margin-bottom: 4px; }
+  .bar-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
+  .dim-reasoning { font-size: 12px; color: #777; line-height: 1.5; }
+  .resume-box { font-size: 12px; font-family: 'Courier New', monospace; white-space: pre-wrap; background: #f8f8f6; padding: 16px; border-radius: 8px; line-height: 1.7; color: #1a1a1a; max-height: 640px; overflow-y: auto; border: 0.5px solid #e8e8e8; }
+  .strategy-item { font-size: 13px; color: #555; line-height: 1.6; padding: 8px 0; border-bottom: 0.5px solid #f0f0f0; }
+  .strategy-item:last-child { border-bottom: none; }
+  .api-row { display: flex; gap: 8px; align-items: center; margin-bottom: 16px; }
+  .api-input { flex: 1; padding: 8px 12px; font-size: 13px; font-family: inherit; border: 0.5px solid #ddd; border-radius: 8px; background: #fafafa; color: #1a1a1a; }
+  .api-input:focus { outline: none; border-color: #999; }
+  .section-label { font-size: 11px; font-weight: 500; color: #999; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+  #results { display: none; }
+  .copy-btn { font-size: 12px; padding: 4px 10px; }
+  .no-resume-msg { font-size: 13px; color: #999; font-style: italic; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <h1>Job match agent</h1>
+  <p class="subtitle">Scores job postings against Vishnu's full profile. Generates a tailored resume if match is above 70%.</p>
+
+  <div class="card">
+    <div class="section-label">API key</div>
+    <div class="api-row">
+      <input type="password" class="api-input" id="apiKey" placeholder="sk-ant-..." />
+      <button onclick="saveKey()">Save</button>
+      <span id="keySaved" style="font-size:12px;color:#0a6040;display:none">Saved</span>
+    </div>
+    <p style="font-size:12px;color:#999">Key is stored in your browser only. Never sent anywhere except Anthropic's API.</p>
+  </div>
+
+  <div class="card">
+    <label for="updateInput">Updates since last session (optional)</label>
+    <textarea id="updateInput" placeholder="Paste any new information here — new applications submitted, new skills learned, new contacts made, project updates. Leave blank if nothing has changed."></textarea>
+  </div>
+
+  <div class="card">
+    <label for="jobInput">Job posting</label>
+    <textarea id="jobInput" placeholder="Paste the full job posting here including responsibilities, qualifications, company, location, and salary if listed."></textarea>
+    <div class="btn-row">
+      <button class="primary" id="runBtn" onclick="runAgent()">Analyze posting</button>
+      <button onclick="clearAll()">Clear</button>
+      <span id="spinner" style="display:none"><span class="spinner"></span></span>
+      <span id="statusMsg" class="status-msg"></span>
+    </div>
+  </div>
+
+  <div id="results">
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('scoring',this)">Score breakdown</button>
+      <button class="tab" onclick="showTab('resume',this)">Tailored resume</button>
+      <button class="tab" onclick="showTab('strategy',this)">Strategy notes</button>
+    </div>
+
+    <div id="tab-scoring" class="card">
+      <div class="overall-row">
+        <span class="overall-num" id="overallScore">--</span>
+        <span class="overall-label">/ 100 match score</span>
+      </div>
+      <span id="verdictBox" class="verdict"></span>
+      <div id="dimRows" style="margin-top:20px"></div>
+    </div>
+
+    <div id="tab-resume" class="card" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <span style="font-size:15px;font-weight:500">Tailored resume</span>
+        <button class="copy-btn" onclick="copyResume()">Copy</button>
+      </div>
+      <div class="resume-box" id="resumeOut"></div>
+    </div>
+
+    <div id="tab-strategy" class="card" style="display:none">
+      <div style="font-size:15px;font-weight:500;margin-bottom:14px">Tailoring strategy</div>
+      <div id="strategyOut"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const KNOWLEDGE_BASE = `=== VISHNU MURTHY — COMPLETE PROFILE ===
+
+IDENTITY: Vishnu Murthy, graduating May 2026, Brandeis University, B.S. with Honors in Physics and Biological Physics. US Citizen, no sponsorship required. Based in Waltham MA, open to relocation anywhere in US.
+
+CORE IDENTITY: Physicist who approaches imaging from wave-matter interaction and image formation first principles. Cleared two KLA PROLITH technical interviews at MS/PhD level — Trey Graves said his fundamentals were in line with what KLA expects for optical roles.
+
+=== EDUCATION ===
+Brandeis University, Waltham MA
+B.S. with Honors in Physics and Biological Physics, Aug 2022 - May 2026
+Focus: Optical Systems for Semiconductor Wafer Inspection
+Minors: Mathematics, History
+Awards: Dean's Merit Scholarship $10,500/year, Departmental Honors
+Leadership: Brandeis Cricket Club (Founder and President), Brandeis Quant Club (Project Lead and Officer)
+
+=== CORE TECHNICAL KNOWLEDGE ===
+
+HOPKINS PARTIAL COHERENCE THEORY (deep, built simulator from first principles):
+- Mutual coherence function J(x1,x2), van Cittert-Zernike theorem
+- TCC formulation: TCC(f1,f2) = integral S(f) P(f+f1) P*(f+f2) df
+- SOCS decomposition for computational efficiency (used in KLA PROLITH)
+- Sigma parameter effects: coherent vs incoherent imaging behavior
+- Why off-axis illumination shifts diffraction orders to fill pupil, improving contrast
+
+FOURIER OPTICS AND IMAGE FORMATION:
+- CTF, OTF, MTF relationships and physical meaning
+- Three-zone pupil overlap picture explaining MTF rolloff
+- Rayleigh criterion, coherent vs incoherent resolution limits
+- Abbe theory of image formation
+
+DARKFIELD INSPECTION PHYSICS:
+- Oblique angle illumination for surface selectivity and noise suppression
+- Circular polarization for grain and color noise rejection
+- KLA Puma series laser scanner darkfield inspection tools
+- LS-SWIFT division: laser scanning and SWIFT all-wafer-surface inspection
+- Defect types: particles, bridges, residues, pattern anomalies
+
+OPTICAL METROLOGY:
+- CD measurement, scatterometry, ellipsometry (adjacent knowledge)
+- OCD: diffraction from periodic structures to extract feature dimensions
+- Film metrology: interference for thickness and refractive index
+- SNR >= 3 as industry-standard defect detectability threshold
+- Die-to-die comparison methodology
+
+LASER PHYSICS AND SYSTEMS:
+- IPL and laser-tissue interaction, selective photothermolysis
+- Chromophore absorption: hemoglobin, melanin spectra
+- Arrhenius damage model: Omega(t) = integral A exp(-Ea/RT(t)) dt
+- Pulse engineering: single pulse, pulse train, subpulse burst modes
+- Zemax ray tracing for optical system design
+
+MULTI-PHYSICS SIMULATION:
+- Monte Carlo photon transport through turbid media
+- COMSOL: time-dependent heat transfer, PDE/ODE coupling, Arrhenius damage
+- Heat source: Q(x,y,z,t) = mu_a(lambda) Phi(x,y,z,lambda) pulse(t)
+- 3D absorption distribution import from Monte Carlo into COMSOL
+
+=== PROJECT PORTFOLIO ===
+
+PROJECT 1: Hopkins Partial Coherence Optical Inspection Simulator (Tiberi Group, Sep 2025 - Present)
+Supervisor: Prof. Emily Tiberi, Brandeis University. Also registered as PHYS 98B Independent Study.
+- Built Hopkins/TCC simulator from first principles at lambda=266nm, NA=0.9
+- Achieved 45% contrast improvement at 250nm pitch through DOE-based off-axis illumination optimization
+- Four characterization experiments: resolution limit mapping, CD measurement accuracy (100nm pitch), illumination recipe optimization, defect sensitivity analysis (bridge/break/particle/void) with SNR >= 3 thresholds
+- Difference-imaging defect detection pipeline implementing die-to-die comparison methodology used in KLA Puma laser scanner platform
+- Experimental design modeled on tool qualification and process monitoring in production semiconductor fabs
+
+PROJECT 2: PHYS 98B Independent Study — Battery Electrode Inline Optical Inspection (Dec 2025 - Present)
+- Designing optical inspection system for inline defect detection in battery electrode manufacturing using Zemax ray-tracing
+- Optimizing illumination geometry for surface defect contrast in high-volume roll-to-roll processing
+
+PROJECT 3: Candela Medical R&D Internship (Jun-Sep 2025)
+Role: R&D Intern, Optics and Laser Technology, Marlborough MA
+Device: Nordlys platform, PR 530 energy-boosted handpiece (IPL dermatological device)
+- Built integrated multi-physics pipeline: Monte Carlo photon transport + COMSOL heat transfer + Arrhenius damage modeling
+- Multi-layer tissue model with spectrally dependent absorption and scattering
+- Spectrally resolved chromophore absorption models: hemoglobin (oxy/deoxy), melanin
+- Systematic parameter sweeps: pulse duration, fluence, cooling conditions, spectral emission profiles
+- Evaluated single pulse, pulse train, subpulse burst strategies for PR 530
+- Produced BKMs, application notes, technical documentation
+- Collaborated with regulatory affairs to translate simulation results into actionable design guidance and FDA-aligned validation documentation
+HONEST FRAMING: Work was simulation-based, not bench-based. Did not directly operate laser devices. BKM and regulatory documentation was produced but was not the primary deliverable. Laser cavity architecture knowledge was working knowledge from collaboration, not hands-on building.
+
+PROJECT 4: PIDI — Physics-Informed Defect Intelligence (In development, GitHub portfolio)
+- P1: Hopkins Defect Simulator (built)
+- P2: Contrast Optimization Tool
+- P3: AI Inspection Recipe Generator
+Vision: Physics simulator + synthetic data generation + classical ML + deep learning CNN + physics-informed constraints as loss function regularizer. Long-term connection to Nvidia Manufacturing AI.
+
+PROJECT 5: Baskaran Group Computational Physics (Jan 2024 - May 2025)
+- Modeled bacterial chemotaxis using Fisher-KPP and Keller-Segel PDE frameworks
+- Python numerical solver: FTCS, Lax finite-difference schemes, FFT spectral methods
+- Parameter sweeps, phase diagram analysis of pattern regimes
+
+PROJECT 6: Yevick Laboratory (Mar-Aug 2023)
+- Confocal fluorescence microscopy (primary imaging work)
+- Formal TEM training on Tundra Cryo-TEM, Tecnai F20, FEI Morgagni at Brandeis EM Facility
+- No SEM experience, no independent TEM operation — training only
+- 1D PDE model for calcium signaling dynamics in RPE-1 cells
+
+=== TOOLS AND SKILLS ===
+Programming: Python (NumPy, SciPy, Matplotlib, Pandas), MATLAB, Wolfram Mathematica, LaTeX, Excel, JMP
+Simulation: COMSOL Multiphysics, Zemax OpticStudio, Monte Carlo modeling
+Domain: Partially Coherent Imaging, Hopkins/TCC Theory, Darkfield and Brightfield Inspection Physics, Optical Alignment and Characterization, Defect Inspection, Difference Imaging, Optical Metrology (CD, MTF, Contrast), Semiconductor Wafer Inspection, Illumination Optimization
+Documentation: BKM generation, application notes, FDA regulatory documentation, field service escalation reports, technical presentations, cross-functional collaboration
+R&D: DOE Design and Analysis, Failure Analysis, Root Cause Identification, Data Analysis and Visualization
+
+=== CAREER GOALS ===
+
+LONG-TERM (5-10 years): Manufacturing AI or Yield Enhancement at Nvidia.
+Path: Semiconductor capital equipment (KLA/ASML/Onto/Applied Materials) + UA Optical Sciences MS + PIDI AI portfolio -> Nvidia Manufacturing AI or Yield Enhancement.
+
+PRIMARY TARGET: Applications Engineering in semiconductor optical inspection and metrology at KLA, ASML, Onto Innovation, Applied Materials.
+
+MEDIUM-TERM: KLA Technical Support Engineer (laser scanner, Puma series, Phoenix AZ) as foot-in-the-door with path to applications engineering + UA Optical Sciences MS via tuition reimbursement.
+
+UNIVERSITY OF ARIZONA MS IN OPTICAL SCIENCES:
+Target start: Fall 2027. GRE waived. 71% acceptance rate. 2.64 year average. August 1 deadline. Plan to apply during Candela summer internship (July). Letters from Prof. Tiberi (primary) plus others.
+
+LEAN SIX SIGMA: IASSC Green Belt certification planned during Candela internship months 2-3.
+
+=== PRESENT CIRCUMSTANCES ===
+
+Graduating May 2026, available June 2026. Must be financially independent. Planning to live with friends as roommates in MA area. Brother in Cambridge as temporary backup only.
+
+ACCEPTABLE JOB PATHS:
+Tier 1 (ideal): Full-time applications engineer or TSE at KLA, ASML, Onto Innovation, Applied Materials, Halo Industries.
+Tier 2 (good bridge): Full-time at photonics/laser company in optics-adjacent work.
+Tier 3 (acceptable bridge): Regulatory affairs or R&D internship at Candela Medical with conversion potential. Financial independence while semiconductor search continues. Hannah Chadwick at Candela actively placing Vishnu in R&D or RA internship for summer 2026 as of April 2 2026.
+Tier 4 (low priority backup): General engineering roles with weak optics overlap.
+
+REJECT AUTOMATICALLY: Active security clearance required, power electronics/GaAs with no optics overlap (Skyworks etch, Infineon power semiconductors), graduating senior applying for sophomore/junior intern roles (eligibility mismatch), Singapore or international relocation.
+
+REGULATORY AFFAIRS MODIFIER: RA roles at medical device companies score minimum 65 in trajectory alignment if realistic conversion to full-time is offered, because financial independence is a genuine near-term priority that justifies this bridge.
+
+=== APPLICATIONS HISTORY ===
+
+ACTIVE/SUBMITTED:
+- KLA TSE Phoenix, Req 2533268, full-time, submitted April 2026, referral Barak Barzvi, STRONGEST ACTIVE APPLICATION
+- KLA TSE Chandler/Phoenix, Req 2634259, full-time, submitted April 2026, no referral
+- KLA BBP Customer Engagement AE, Req 2634895, submitted March 2026, Nathan said MS/PhD required
+- KLA Reticle Inspection CE AE, Req 2634975, submitted March 2026, Nathan said MS/PhD required
+- KLA Surfscan Systems Engineering Intern, Req 2532514, submitted March 2026
+- KLA SensArray AE Intern, Req 2532180, submitted March 2026, Nathan forwarded to hiring manager
+- ASML Optical Coating Process Engineering Intern, J-00334223, Wilton CT, Caleb Fulcher forwarded name
+- ZEISS 3D Tomography AE, Boise ID, submitted March 2026
+- Onto Innovation Metrology AE, R-5070, Wilmington MA, submitted March 16, follow-up April 2, no response yet
+- Lumentum Optical Module Design Intern, submitted March 17, no response
+- Candela Medical internship, in progress via Hannah Chadwick, R&D or RA, summer 2026
+
+TO APPLY:
+- Halo Industries Optics and Laser Engineering Intern, Santa Clara CA, only 2 applicants when spotted, extremely strong fit
+- Applied Materials Global Product Support Engineer Early Career, Santa Clara CA, $100k-136k, full-time
+- ASML Customer Support Engineer DUV Intern, Chandler AZ, J-00337814, Caleb Fulcher is warm contact
+- Onto Innovation Applications Engineer 3, Hillsboro OR, full-time, 0-3 years experience
+
+REJECTED/CLOSED:
+- ASML final stage, did not advance
+- KLA PROLITH Applications Intern, did not advance after 2 technical rounds (Trey Graves positive feedback, cleared MS/PhD level technical interviews)
+
+=== KEY CONTACTS ===
+- Barak Barzvi: KLA employee, personal referral via his son (Vishnu's friend), listed on Phoenix TSE, very busy do not contact directly
+- Nathan Kwan: KLA Emerging Talent Recruiter, managed PROLITH process, said full-time AE needs MS/PhD
+- Trey Graves: KLA PROLITH, PhD Physics Texas A&M, gave positive technical feedback
+- Alex Vaglio Pret: KLA PROLITH, Italy-based, second technical round
+- Caleb Fulcher: ASML Senior Talent Acquisition, warm contact, forwarded name
+- Diego Lobato: Onto Innovation recruiter, no response to date
+- Bebhinn Kernan: Onto Innovation HR Wilmington, no response
+- Hannah Chadwick: Candela Medical HR, hannah.elrick@candelamedical.com, warm, actively placing Vishnu
+- Linda McGilvray: Independent semiconductor metrology recruiter Greater Boston, to contact Tuesday
+- Yimin and Maxim: Candela Medical R&D team, Hannah reaching out to them for Vishnu
+
+=== MASTER RESUME BULLETS ===
+
+TIBERI GROUP (semiconductor-facing):
+- Built a partially coherent optical inspection simulator from first principles using Hopkins/TCC imaging theory, modeling how illumination geometry, including oblique off-axis configurations analogous to darkfield laser scanner physics, affects defect contrast, defect signal, and resolution on patterned wafers (wavelength 266nm, NA 0.9).
+- Optimized illumination geometry through systematic parameter characterization to maximize defect detection sensitivity, achieving 45% contrast improvement for dense features at 250nm pitch; managed diffraction order collection in the pupil plane to isolate defect signal from background noise across coherence conditions and source configurations.
+- Conducted four structured characterization experiments: resolution limit mapping across coherence conditions, CD measurement accuracy for sub-wavelength features (100nm pitch), illumination recipe optimization, and defect detection sensitivity analysis (bridge, break, particle, void) with SNR-based detectability thresholds; experimental design followed the structure of tool qualification and process monitoring procedures used in production semiconductor fabs.
+- Developed a difference-imaging defect detection pipeline with quantitative SNR >= 3 detection thresholds across varying defect sizes and illumination recipes, implementing the die-to-die comparison methodology used in production patterned wafer inspection systems, including KLA's Puma laser scanner platform.
+
+PHYS 98B BULLET:
+- Designing an optical inspection system for inline defect detection in battery electrode manufacturing using Zemax ray-tracing simulation; optimizing illumination geometry and optical configuration for surface defect contrast enhancement in high-volume roll-to-roll processing environments.
+
+CANDELA (semiconductor-facing):
+- Developed an integrated optical-thermal simulation framework (Monte Carlo, COMSOL, Zemax) for characterization of laser-based IPL devices; performed systematic parameter sweeps to quantify energy deposition, optical alignment sensitivity, spatiotemporal heating, and damage thresholds across device configurations.
+- Produced best-known-methods (BKMs), application notes, and technical documentation recording simulation-validated design recommendations for energy-boosted handpieces (PR 530); experience writing structured diagnostic and corrective-action documentation under high-stakes conditions, including FDA regulatory submissions, directly applicable to field service escalation reporting.
+- Implemented spectrally resolved absorption models for chromophore targeting; produced spectrum-weighted fluence distributions informing design decisions and clinical use case optimization across multiple product configurations.
+
+CANDELA (R&D/medical device-facing):
+- Developed an integrated multi-physics simulation framework combining Monte Carlo photon transport, COMSOL Multiphysics, and Zemax OpticStudio to model Intense Pulsed Light tissue interactions for the Nordlys platform; built spectrally resolved chromophore absorption models for hemoglobin and melanin to generate wavelength-weighted fluence distributions and tissue response predictions.
+- Performed systematic parameter sweeps across pulse duration, fluence, cooling conditions, and spectral emission profiles to quantify spatiotemporal heat deposition and Arrhenius-based tissue damage thresholds; implemented distributed ODE damage modeling in COMSOL to evaluate single pulse, pulse train, and subpulse burst strategies for the PR 530 energy-boosted handpiece.
+- Collaborated with regulatory affairs to translate multi-physics simulation results into actionable design guidance; deliverables included damage threshold analysis, pulse optimization recommendations, and energy safety documentation supporting FDA-aligned validation workflows.
+
+BASKARAN:
+- Modeled bacterial chemotaxis using nonlinear PDE frameworks (Fisher-KPP, Keller-Segel); built Python numerical solver implementing finite-difference (FTCS, Lax) and spectral (FFT) methods for traveling wave simulations.
+- Conducted parameter sweeps and phase diagram analysis to map pattern regimes; tested robustness of emergent spatiotemporal patterns across varying initial conditions.
+
+YEVICK:
+- Received formal training on Tundra Cryo-TEM, Tecnai F20, and FEI Morgagni electron microscopes at the Brandeis Electron Microscopy Facility; conducted confocal fluorescence microscopy experiments; developed 1D PDE model for calcium signaling dynamics in retinal pigment epithelial cells.
+
+=== RESUME RULES (ABSOLUTE) ===
+1. One page maximum, non-negotiable
+2. No em dashes anywhere, use commas or semicolons
+3. No "directly analogous" more than once per resume
+4. Every claim must be defensible in an interview
+5. No microswimmer thesis line — contradicts optics narrative
+6. Semiconductor roles: use semiconductor-facing Candela bullets
+7. Medical device or photonics roles: use R&D/medical device-facing Candela bullets
+8. Baskaran and Yevick: stand on technical merit without over-explaining relevance
+9. SNR written as >= 3 not with Unicode symbol
+10. Remove location from header when applying to relocation roles
+11. Do not suggest applying to already submitted roles
+
+=== SCORING RUBRIC ===
+
+Threshold: 70/100 to generate tailored resume. Weighted average of six dimensions.
+
+D1 Technical skills overlap (30%):
+90-100: Direct match — optical inspection, metrology, laser systems, darkfield physics
+70-89: Strong adjacent — photonics, optical engineering, precision measurement
+50-69: Moderate — general physics, some optics
+30-49: Weak — EE, mechanical, adjacent but different
+0-29: No match — power electronics, embedded systems, GaAs etch, software only
+
+D2 Experience level fit (20%):
+90-100: BS + 0-2 years explicitly acceptable or equivalent work experience language
+70-89: BS + 2 years required, medical device plus research makes equivalent case
+50-69: MS preferred but BS considered
+30-49: MS/PhD required, hard structural barrier
+0-29: PhD required or active security clearance needed
+
+D3 Location acceptability (15%):
+100: Phoenix AZ, Chandler AZ, Waltham/Boston MA, Wilmington MA
+85: Bay Area CA, Oregon, Connecticut, New York, Texas
+70: Midwest, Southeast, other US
+40: Boise ID
+0: Singapore, Germany, international relocation
+
+D4 Career trajectory alignment (20%):
+90-100: Direct path — KLA TSE, Onto Innovation AE, ASML CSE, Applied Materials GPS
+70-89: Strong adjacent — Halo Industries optics, photonics R&D, laser systems engineering
+50-69: Acceptable bridge — Candela RA, medical device regulatory, general optical engineering
+30-49: Weak alignment — general engineering, non-optics technical roles
+0-29: Active detour — power semiconductors, embedded systems, unrelated industries
+
+D5 Qualification barrier (10%):
+100: No hard blockers, BS accessible
+70: Stretch but manageable with cover letter argument
+30: MS strongly preferred, hard to overcome
+0: Active security clearance required, PhD mandatory, graduating senior for sophomore/junior intern
+
+D6 Company tier and strategic value (5%):
+90-100: KLA, ASML, Applied Materials, Onto Innovation, Nvidia, Halo Industries
+70-89: Lumentum, Coherent, Candela Medical, Micron, Intel, ZEISS
+50-69: General semiconductor, photonics startups, medical device companies
+0-29: Unrelated industries
+
+SPECIAL RULE: Regulatory affairs roles at medical device companies score minimum 65 in D4 if conversion to full-time is realistic. Financial independence is a genuine near-term priority.`;
+
+const SYSTEM_PROMPT = KNOWLEDGE_BASE + `
+
+=== YOUR TASK ===
+
+When given a job posting and optional session updates, return ONLY a JSON object in this exact format:
+
+{
+  "overall": <weighted average score 0-100, integers only>,
+  "pass": <true if overall >= 70>,
+  "already_applied": <true if this role appears in the applications history above>,
+  "dimensions": [
+    {"name": "Technical skills overlap", "weight": 30, "score": <0-100>, "reasoning": "<2 sentences max>"},
+    {"name": "Experience level fit", "weight": 20, "score": <0-100>, "reasoning": "<2 sentences max>"},
+    {"name": "Location acceptability", "weight": 15, "score": <0-100>, "reasoning": "<2 sentences max>"},
+    {"name": "Career trajectory alignment", "weight": 20, "score": <0-100>, "reasoning": "<2 sentences max>"},
+    {"name": "Qualification barrier", "weight": 10, "score": <0-100>, "reasoning": "<2 sentences max>"},
+    {"name": "Company tier and strategic value", "weight": 5, "score": <0-100>, "reasoning": "<2 sentences max>"}
+  ],
+  "resume": "<full tailored one-page resume as plain text following all resume rules — ONLY include if pass is true AND already_applied is false, otherwise empty string>",
+  "strategy": "<if pass and not already applied: bullet points explaining every tailoring decision. If fail: brief explanation of why rejected. If already applied: note that this role was already submitted.>"
+}
+
+Calculate overall as: (D1*0.30) + (D2*0.20) + (D3*0.15) + (D4*0.20) + (D5*0.10) + (D6*0.05), round to nearest integer.
+Respond ONLY with the JSON object. No preamble, no markdown fences.`;
+
+function saveKey() {
+  const k = document.getElementById('apiKey').value.trim();
+  if (k) {
+    localStorage.setItem('vm_api_key', k);
+    document.getElementById('keySaved').style.display = 'inline';
+    setTimeout(() => document.getElementById('keySaved').style.display = 'none', 2000);
+  }
+}
+
+window.onload = () => {
+  const saved = localStorage.getItem('vm_api_key');
+  if (saved) document.getElementById('apiKey').value = saved;
+};
+
+async function runAgent() {
+  const apiKey = document.getElementById('apiKey').value.trim() || localStorage.getItem('vm_api_key');
+  if (!apiKey) { alert('Please enter your Anthropic API key first.'); return; }
+
+  const posting = document.getElementById('jobInput').value.trim();
+  if (!posting) { alert('Please paste a job posting.'); return; }
+
+  const updates = document.getElementById('updateInput').value.trim();
+
+  const btn = document.getElementById('runBtn');
+  const spinner = document.getElementById('spinner');
+  const status = document.getElementById('statusMsg');
+
+  btn.disabled = true;
+  spinner.style.display = 'inline-block';
+  status.textContent = 'Scoring...';
+  document.getElementById('results').style.display = 'none';
+
+  const userMsg = updates
+    ? `SESSION UPDATES:\n${updates}\n\nJOB POSTING:\n${posting}`
+    : `JOB POSTING:\n${posting}`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4096,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: userMsg }]
+      })
+    });
+
+    const data = await res.json();
+
+    if (data.error) {
+      status.textContent = 'API error: ' + data.error.message;
+      return;
+    }
+
+    const text = data.content?.find(b => b.type === 'text')?.text || '';
+    let parsed;
+    try {
+      parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
+    } catch {
+      status.textContent = 'Parse error. Try again.';
+      console.error('Raw response:', text);
+      return;
+    }
+
+    renderResults(parsed);
+    status.textContent = '';
+
+  } catch(e) {
+    status.textContent = 'Network error: ' + e.message;
+  } finally {
+    btn.disabled = false;
+    spinner.style.display = 'none';
+  }
+}
+
+function renderResults(d) {
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('overallScore').textContent = Math.round(d.overall);
+
+  const vbox = document.getElementById('verdictBox');
+  if (d.already_applied) {
+    vbox.className = 'verdict';
+    vbox.style.background = '#f0f0ee';
+    vbox.style.color = '#555';
+    vbox.textContent = 'Already applied to this role';
+  } else if (d.pass) {
+    vbox.className = 'verdict verdict-pass';
+    vbox.textContent = 'Pass — tailored resume generated';
+  } else {
+    vbox.className = 'verdict verdict-fail';
+    vbox.textContent = 'Below 70% threshold — resume not generated';
+  }
+
+  const rows = document.getElementById('dimRows');
+  rows.innerHTML = '';
+  (d.dimensions || []).forEach(dim => {
+    const s = Math.round(dim.score);
+    const color = s >= 70 ? '#1a9e6e' : s >= 50 ? '#d4880a' : '#c0392b';
+    rows.innerHTML += `
+      <div class="dim-block">
+        <div class="dim-header">
+          <span class="dim-name">${dim.name} <span class="dim-weight">(${dim.weight}%)</span></span>
+          <span class="dim-score" style="color:${color}">${s}</span>
+        </div>
+        <div class="bar-bg"><div class="bar-fill" style="width:${s}%;background:${color}"></div></div>
+        <div class="dim-reasoning">${dim.reasoning}</div>
+      </div>`;
+  });
+
+  const resumeOut = document.getElementById('resumeOut');
+  if (d.pass && !d.already_applied && d.resume) {
+    resumeOut.textContent = d.resume;
+  } else {
+    resumeOut.innerHTML = '<span class="no-resume-msg">' + (d.already_applied ? 'Already applied — no new resume needed.' : 'Score below 70% — no resume generated.') + '</span>';
+  }
+
+  const stratOut = document.getElementById('strategyOut');
+  stratOut.innerHTML = '';
+  if (d.strategy) {
+    d.strategy.split('\n').filter(l => l.trim()).forEach(line => {
+      const div = document.createElement('div');
+      div.className = 'strategy-item';
+      div.textContent = line.replace(/^[-*]\s*/, '');
+      stratOut.appendChild(div);
+    });
+  }
+
+  showTab('scoring', document.querySelector('.tab'));
+}
+
+function showTab(tab, btn) {
+  ['scoring','resume','strategy'].forEach(t => {
+    document.getElementById('tab-'+t).style.display = t === tab ? 'block' : 'none';
+  });
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+}
+
+function copyResume() {
+  const text = document.getElementById('resumeOut').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = event.target;
+    btn.textContent = 'Copied';
+    setTimeout(() => btn.textContent = 'Copy', 1500);
+  });
+}
+
+function clearAll() {
+  document.getElementById('jobInput').value = '';
+  document.getElementById('updateInput').value = '';
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('statusMsg').textContent = '';
+}
+</script>
+</body>
+</html>
