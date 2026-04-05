@@ -362,8 +362,6 @@ function saveResultsToStorage(timestamp) {
 
 async function runBatch() {
   if (isProcessing) return;
-  const apiKey = document.getElementById('apiKey').value.trim() || localStorage.getItem('vm_api_key');
-  if (!apiKey) { alert('Enter your Anthropic API key first.'); return; }
   const batchText = document.getElementById('batchInput').value.trim();
   if (!batchText) { alert('Paste job postings first.'); return; }
   if (!cachedKnowledge) { await loadKnowledge(); }
