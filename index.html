@@ -345,6 +345,27 @@ Return ONLY valid JSON, no markdown fences, no preamble:
   },
   "physics_connection": "<2-3 paragraph explanation of the genuine underlying physics or domain connection between Vishnu's Hopkins/Candela work and the core technical problems this role solves every day. Be specific about which physics concepts transfer and why. This should help Vishnu articulate his fit in a cover letter or opening interview answer. If connection is weak, say so honestly.>",
   "communication_map": "<2 paragraph explanation of how this specific role develops corporate communication skills. What meetings would Vishnu be in? What types of stakeholders? What documentation? What soft skill gaps does this role specifically address? If communication development value is low, note that honestly.>",
+  "tailoring_diff": {
+    "section_header": "<which section header was chosen from the lookup table and why>",
+    "candela_variant": "<which Candela role title and bullet set was used (semiconductor/TSE-facing OR R&D/medical/regulatory-facing) and why>",
+    "bullets_modified": [
+      {
+        "original": "<the master resume bullet before tailoring>",
+        "tailored": "<the bullet as it appears in the tailored resume>",
+        "what_changed": "<specific words or framing added/removed and why — e.g. added 'process control' because posting emphasizes SPC>"
+      }
+    ],
+    "bullets_kept_unchanged": ["<list bullet summaries that were used as-is from master>"],
+    "bullets_omitted": [
+      {
+        "bullet_summary": "<which bullet or section was left out>",
+        "reason": "<why it was excluded — e.g. 'Baskaran PDE work has no connection to this role's requirements'>"
+      }
+    ],
+    "header_changes": "<any changes to the header line (e.g. location removed for relocation role)>",
+    "skills_line_changes": "<what was added to or removed from the skills section for this role>",
+    "overall_strategy": "<2-3 sentences explaining the tailoring strategy — what narrative is the resume building and how does it connect Vishnu's background to this specific role?>"
+  },
   "defensibility": [
     {
       "bullet": "<exact bullet text from the tailored resume>",
@@ -603,6 +624,7 @@ function buildJobCard(r, type, globalIndex) {
         <button class="tab" onclick="switchTab(this,'fields')">Workday fields</button>
         <button class="tab" onclick="switchTab(this,'physics')">Physics map</button>
         <button class="tab" onclick="switchTab(this,'comm')">Comm map</button>
+        <button class="tab" onclick="switchTab(this,'tailoring')">Tailoring</button>
         <button class="tab" onclick="switchTab(this,'defense')">Defensibility</button>
       </div>
       <div class="tab-content active" data-tab="scoring">${buildScoringTab(r)}</div>
@@ -610,6 +632,7 @@ function buildJobCard(r, type, globalIndex) {
       <div class="tab-content" data-tab="fields">${buildFieldsTab(r)}</div>
       <div class="tab-content" data-tab="physics">${buildPhysicsTab(r)}</div>
       <div class="tab-content" data-tab="comm">${buildCommTab(r)}</div>
+      <div class="tab-content" data-tab="tailoring">${buildTailoringTab(r)}</div>
       <div class="tab-content" data-tab="defense">${buildDefenseTab(r)}</div>
     </div>`;
   return card;
@@ -653,6 +676,57 @@ function buildPhysicsTab(r) {
 function buildCommTab(r) {
   if (!r.communication_map) return '<p style="font-size:13px;color:#999;font-style:italic">No communication map generated.</p>';
   return `<div class="comm-map">${escapeHtml(r.communication_map).replace(/\n\n/g, '</div><div class="comm-map" style="margin-top:10px">')}</div>`;
+}
+
+function buildTailoringTab(r) {
+  const d = r.tailoring_diff;
+  if (!d) return '<p style="font-size:13px;color:#999;font-style:italic">No tailoring diff generated.</p>';
+  let html = '';
+
+  // Overall strategy
+  if (d.overall_strategy) {
+    html += `<div style="font-size:13px;color:#1a1a1a;line-height:1.7;background:#f0f8f0;padding:14px;border-radius:8px;border-left:3px solid #1a9e6e;margin-bottom:14px"><strong>Strategy:</strong> ${escapeHtml(d.overall_strategy)}</div>`;
+  }
+
+  // Section header and Candela variant
+  if (d.section_header || d.candela_variant) {
+    html += '<div style="margin-bottom:14px">';
+    if (d.section_header) html += `<div style="font-size:12px;margin-bottom:6px"><strong>Section header:</strong> ${escapeHtml(d.section_header)}</div>`;
+    if (d.candela_variant) html += `<div style="font-size:12px;margin-bottom:6px"><strong>Candela variant:</strong> ${escapeHtml(d.candela_variant)}</div>`;
+    if (d.header_changes) html += `<div style="font-size:12px;margin-bottom:6px"><strong>Header changes:</strong> ${escapeHtml(d.header_changes)}</div>`;
+    if (d.skills_line_changes) html += `<div style="font-size:12px"><strong>Skills line:</strong> ${escapeHtml(d.skills_line_changes)}</div>`;
+    html += '</div>';
+  }
+
+  // Bullets modified
+  if (d.bullets_modified && d.bullets_modified.length > 0) {
+    html += '<div style="font-size:11px;font-weight:500;color:#999;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Modified bullets</div>';
+    d.bullets_modified.forEach(b => {
+      html += `<div style="margin-bottom:12px;padding:10px 12px;border-radius:8px;background:#fef9e7;border-left:3px solid #d4880a">`;
+      html += `<div style="font-size:11px;color:#8b5e0a;font-weight:500;margin-bottom:4px">What changed: ${escapeHtml(b.what_changed)}</div>`;
+      html += `<div style="font-size:11px;color:#888;margin-bottom:4px"><strong>Original:</strong> ${escapeHtml((b.original || '').substring(0, 120))}...</div>`;
+      html += `<div style="font-size:11px;color:#444"><strong>Tailored:</strong> ${escapeHtml((b.tailored || '').substring(0, 120))}...</div>`;
+      html += '</div>';
+    });
+  }
+
+  // Bullets kept unchanged
+  if (d.bullets_kept_unchanged && d.bullets_kept_unchanged.length > 0) {
+    html += '<div style="font-size:11px;font-weight:500;color:#999;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;margin-top:12px">Kept as-is</div>';
+    html += '<div style="font-size:12px;color:#666;line-height:1.6;padding:8px 12px;background:#f8f8f6;border-radius:6px">';
+    d.bullets_kept_unchanged.forEach(b => { html += `<div style="margin-bottom:4px">- ${escapeHtml(b)}</div>`; });
+    html += '</div>';
+  }
+
+  // Bullets omitted
+  if (d.bullets_omitted && d.bullets_omitted.length > 0) {
+    html += '<div style="font-size:11px;font-weight:500;color:#999;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;margin-top:12px">Omitted</div>';
+    d.bullets_omitted.forEach(b => {
+      html += `<div style="font-size:12px;color:#888;margin-bottom:4px;padding:6px 12px;background:#fce8e8;border-radius:6px;border-left:3px solid #c0392b"><strong>${escapeHtml(b.bullet_summary)}:</strong> ${escapeHtml(b.reason)}</div>`;
+    });
+  }
+
+  return html || '<p style="font-size:13px;color:#999;font-style:italic">No tailoring diff data.</p>';
 }
 
 function buildDefenseTab(r) {
