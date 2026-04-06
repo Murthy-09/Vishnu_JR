@@ -94,6 +94,20 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 .sync-pending { color: #999; }
 .sync-ok { color: #0a6040; }
 .sync-fail { color: #c0392b; }
+#history-section { margin-top: 24px; }
+.history-toggle { display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 10px 0; }
+.history-toggle:hover .history-title { color: #333; }
+.history-title { font-size: 14px; font-weight: 500; color: #666; }
+.history-count { font-size: 12px; color: #999; }
+.history-chevron { font-size: 12px; color: #999; transition: transform 0.2s; }
+.history-chevron.open { transform: rotate(180deg); }
+.history-body { display: none; }
+.history-body.open { display: block; }
+.history-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 0.5px solid #f0f0f0; font-size: 13px; cursor: pointer; }
+.history-item:hover { background: #fafafa; }
+.history-item-title { font-weight: 500; }
+.history-item-meta { font-size: 11px; color: #999; }
+.history-item-score { font-size: 12px; font-weight: 500; padding: 2px 8px; border-radius: 12px; }
 </style>
 </head>
 <body>
@@ -149,6 +163,20 @@ Paste job posting 3 here..."></textarea>
   </div>
   <div id="passingResults"></div>
   <div id="failingResults" style="margin-top:16px"></div>
+</div>
+
+<div id="history-section" style="display:none">
+  <div class="history-toggle" onclick="toggleHistory()">
+    <div>
+      <span class="history-title">History</span>
+      <span class="history-count" id="historyCount"></span>
+    </div>
+    <span class="history-chevron" id="historyChevron">▼</span>
+  </div>
+  <div class="history-body" id="historyBody"></div>
+  <div style="margin-top:8px">
+    <button class="danger" onclick="clearAllHistory()">Clear all history</button>
+  </div>
 </div>
 
 </div>
@@ -395,7 +423,26 @@ Return ONLY valid JSON, no markdown fences, no preamble:
 
 let cachedKnowledge = null;
 let results = [];
+let currentBatchKeys = [];
 let isProcessing = false;
+
+function getResultKey(r) {
+  return ((r.company || '') + '::' + (r.role_title || '')).toLowerCase().trim();
+}
+
+function upsertResult(result) {
+  const key = getResultKey(result);
+  result._key = key;
+  result._timestamp = new Date().toISOString();
+  const existingIndex = results.findIndex(r => r._key === key);
+  if (existingIndex >= 0) {
+    results[existingIndex] = result;
+    return existingIndex;
+  } else {
+    results.push(result);
+    return results.length - 1;
+  }
+}
 
 window.onload = () => {
   loadKnowledge();
@@ -423,8 +470,10 @@ async function loadSavedResults() {
     const data = await res.json();
     if (data.results && data.results.length > 0) {
       results = data.results;
+      // Backfill _key for old results that don't have it
+      results.forEach(r => { if (!r._key) r._key = getResultKey(r); });
       localStorage.setItem('vj_results', JSON.stringify(data));
-      renderResults(data.timestamp);
+      renderResults(data.lastUpdated || data.timestamp);
       return;
     }
   } catch(e) { console.warn('Notion load failed, falling back to localStorage:', e.message); }
@@ -435,7 +484,8 @@ async function loadSavedResults() {
     try {
       const data = JSON.parse(saved);
       results = data.results || [];
-      if (results.length > 0) renderResults(data.timestamp);
+      results.forEach(r => { if (!r._key) r._key = getResultKey(r); });
+      if (results.length > 0) renderResults(data.lastUpdated || data.timestamp);
     } catch(e) {}
   }
 }
@@ -484,9 +534,7 @@ async function runBatch() {
   if (postings.length === 0) { alert('No valid job postings found. Separate postings with --- on its own line.'); return; }
 
   isProcessing = true;
-  results = [];
-  // Clear previous Notion results before new batch
-  try { await fetch(`${WORKER_URL}/clear-results`, { method: 'POST' }); } catch(e) {}
+  currentBatchKeys = [];
   document.getElementById('runBtn').disabled = true;
   document.getElementById('processing-section').style.display = 'block';
   document.getElementById('results-section').style.display = 'none';
@@ -503,14 +551,16 @@ async function runBatch() {
     try {
       const result = await analyzePosting(posting);
       result._raw = posting;
-      results.push(result);
+      const idx = upsertResult(result);
+      currentBatchKeys.push(result._key);
       saveResultsToStorage(timestamp);
-      saveResultToNotion(result, timestamp, results.length - 1);
+      saveResultToNotion(result, timestamp, idx);
     } catch(e) {
       const errResult = { role_title: `Posting ${i+1}`, company: 'Unknown', location: '', overall: 0, pass: false, rejection_reason: 'Processing error: ' + e.message, _raw: posting };
-      results.push(errResult);
+      const idx = upsertResult(errResult);
+      currentBatchKeys.push(errResult._key);
       saveResultsToStorage(timestamp);
-      saveResultToNotion(errResult, timestamp, results.length - 1);
+      saveResultToNotion(errResult, timestamp, idx);
     }
 
     await new Promise(r => setTimeout(r, 800));
@@ -573,39 +623,114 @@ async function analyzePosting(posting) {
 }
 
 function renderResults(timestamp) {
-  document.getElementById('results-section').style.display = 'block';
-  const passing = results.filter(r => r.pass && !r.already_applied);
-  const applied = results.filter(r => r.already_applied);
-  const failing = results.filter(r => !r.pass && !r.already_applied);
-  document.getElementById('resultsSummary').textContent = `${passing.length} passing, ${failing.length} filtered out, ${applied.length} already applied — ${results.length} total`;
-  document.getElementById('resultsTimestamp').textContent = 'Processed ' + timestamp;
+  // Current batch results (top section)
+  const batchResults = results.filter(r => currentBatchKeys.includes(r._key));
+  const historyResults = results.filter(r => !currentBatchKeys.includes(r._key));
 
-  const passingEl = document.getElementById('passingResults');
-  passingEl.innerHTML = '';
-  if (passing.length > 0) {
-    const h = document.createElement('div');
-    h.style.cssText = 'font-size:13px;font-weight:500;color:#0a6040;margin-bottom:10px;';
-    h.textContent = `${passing.length} roles worth pursuing`;
-    passingEl.appendChild(h);
-    passing.forEach(r => {
-      const gi = results.indexOf(r);
-      passingEl.appendChild(buildJobCard(r, 'pass', gi));
-    });
+  if (batchResults.length > 0) {
+    document.getElementById('results-section').style.display = 'block';
+    const passing = batchResults.filter(r => r.pass && !r.already_applied);
+    const applied = batchResults.filter(r => r.already_applied);
+    const failing = batchResults.filter(r => !r.pass && !r.already_applied);
+    document.getElementById('resultsSummary').textContent = `${passing.length} passing, ${failing.length} filtered out, ${applied.length} already applied -- ${batchResults.length} total`;
+    document.getElementById('resultsTimestamp').textContent = 'Processed ' + timestamp;
+
+    const passingEl = document.getElementById('passingResults');
+    passingEl.innerHTML = '';
+    if (passing.length > 0) {
+      const h = document.createElement('div');
+      h.style.cssText = 'font-size:13px;font-weight:500;color:#0a6040;margin-bottom:10px;';
+      h.textContent = `${passing.length} roles worth pursuing`;
+      passingEl.appendChild(h);
+      passing.forEach(r => {
+        const gi = results.indexOf(r);
+        passingEl.appendChild(buildJobCard(r, 'pass', gi));
+      });
+    }
+
+    const failingEl = document.getElementById('failingResults');
+    failingEl.innerHTML = '';
+    if (failing.length > 0 || applied.length > 0) {
+      const h = document.createElement('div');
+      h.style.cssText = 'font-size:13px;font-weight:500;color:#888;margin-bottom:10px;';
+      h.textContent = 'Filtered out';
+      failingEl.appendChild(h);
+      [...failing, ...applied].forEach(r => {
+        const card = document.createElement('div');
+        card.className = 'fail-card';
+        card.innerHTML = `<div><span style="font-size:13px;font-weight:500">${escapeHtml(r.role_title || 'Unknown role')}</span> <span style="font-size:12px;color:#888">— ${escapeHtml(r.company || '')}</span></div><div class="fail-reason">${r.already_applied ? 'Already applied' : escapeHtml(r.rejection_reason || 'Score: ' + Math.round(r.overall||0))}</div>`;
+        failingEl.appendChild(card);
+      });
+    }
+  } else {
+    document.getElementById('results-section').style.display = 'none';
   }
 
-  const failingEl = document.getElementById('failingResults');
-  failingEl.innerHTML = '';
-  if (failing.length > 0 || applied.length > 0) {
-    const h = document.createElement('div');
-    h.style.cssText = 'font-size:13px;font-weight:500;color:#888;margin-bottom:10px;';
-    h.textContent = 'Filtered out';
-    failingEl.appendChild(h);
-    [...failing, ...applied].forEach(r => {
-      const card = document.createElement('div');
-      card.className = 'fail-card';
-      card.innerHTML = `<div><span style="font-size:13px;font-weight:500">${escapeHtml(r.role_title || 'Unknown role')}</span> <span style="font-size:12px;color:#888">— ${escapeHtml(r.company || '')}</span></div><div class="fail-reason">${r.already_applied ? 'Already applied' : escapeHtml(r.rejection_reason || 'Score: ' + Math.round(r.overall||0))}</div>`;
-      failingEl.appendChild(card);
-    });
+  // History section (all accumulated results)
+  renderHistory();
+}
+
+function renderHistory() {
+  const historySection = document.getElementById('history-section');
+  if (results.length === 0) {
+    historySection.style.display = 'none';
+    return;
+  }
+
+  historySection.style.display = 'block';
+  document.getElementById('historyCount').textContent = `(${results.length} roles)`;
+
+  const body = document.getElementById('historyBody');
+  body.innerHTML = '';
+
+  // Sort by timestamp descending (newest first)
+  const sorted = [...results].sort((a, b) => {
+    const ta = a._timestamp || '';
+    const tb = b._timestamp || '';
+    return tb.localeCompare(ta);
+  });
+
+  sorted.forEach(r => {
+    const gi = results.indexOf(r);
+    const score = Math.round(r.overall || 0);
+    const isPassing = r.pass && !r.already_applied;
+    const scoreColor = isPassing ? '#e1f5ee' : '#fce8e8';
+    const scoreTextColor = isPassing ? '#0a6040' : '#8b2020';
+    const time = r._timestamp ? new Date(r._timestamp).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
+
+    const item = document.createElement('div');
+    item.className = 'history-item';
+    item.onclick = () => toggleHistoryCard(gi);
+    item.innerHTML = `<div><span class="history-item-title">${escapeHtml(r.role_title || 'Unknown')}</span> <span style="font-size:12px;color:#888">— ${escapeHtml(r.company || '')}</span></div><div style="display:flex;align-items:center;gap:8px"><span class="history-item-meta">${time}</span><span class="history-item-score" style="background:${scoreColor};color:${scoreTextColor}">${score}</span></div>`;
+    body.appendChild(item);
+
+    // Expandable card container (hidden by default)
+    const cardContainer = document.createElement('div');
+    cardContainer.id = 'history-card-' + gi;
+    cardContainer.style.display = 'none';
+    cardContainer.style.padding = '0 4px 8px';
+    body.appendChild(cardContainer);
+  });
+}
+
+function toggleHistory() {
+  const body = document.getElementById('historyBody');
+  const chevron = document.getElementById('historyChevron');
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  chevron.classList.toggle('open', !isOpen);
+}
+
+function toggleHistoryCard(gi) {
+  const container = document.getElementById('history-card-' + gi);
+  if (!container) return;
+  if (container.style.display === 'none') {
+    if (!container.hasChildNodes()) {
+      container.appendChild(buildJobCard(results[gi], 'history', gi));
+    }
+    container.style.display = 'block';
+  } else {
+    container.style.display = 'none';
   }
 }
 
@@ -804,12 +929,19 @@ function clearBatch() {
 }
 
 async function clearResults() {
-  if (!confirm('Clear all saved results? This removes them from Notion and local storage.')) return;
+  await clearAllHistory();
+}
+
+async function clearAllHistory() {
+  if (!confirm('Clear ALL history? This removes every result from Notion and local storage permanently.')) return;
   localStorage.removeItem('vj_results');
   results = [];
+  currentBatchKeys = [];
   document.getElementById('results-section').style.display = 'none';
   document.getElementById('passingResults').innerHTML = '';
   document.getElementById('failingResults').innerHTML = '';
+  document.getElementById('history-section').style.display = 'none';
+  document.getElementById('historyBody').innerHTML = '';
   try { await fetch(`${WORKER_URL}/clear-results`, { method: 'POST' }); } catch(e) { console.warn('Notion clear failed:', e.message); }
 }
 </script>
