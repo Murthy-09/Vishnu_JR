@@ -96,7 +96,7 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 <div class="container">
 
 <h1>Vishnu JR <span class="notion-badge">Batch Mode</span></h1>
-<p class="subtitle">Paste up to 20 job postings separated by --- on its own line. The agent processes them overnight using Claude Opus, scores each across 7 dimensions, and generates complete application packages for roles that pass 70%. Results persist across browser sessions.</p>
+<p class="subtitle">Paste up to 20 job postings separated by --- on its own line. The agent processes them overnight using Claude Opus, scores each across 7 dimensions, and generates complete application packages for roles that pass 70%. Results persist to Notion and survive browser close.</p>
 
 
 <div class="card">
@@ -338,7 +338,20 @@ async function loadKnowledge() {
   } catch(e) { el.textContent = 'Failed: ' + e.message; el.className='kb-status error'; }
 }
 
-function loadSavedResults() {
+async function loadSavedResults() {
+  // Try Notion first, fall back to localStorage
+  try {
+    const res = await fetch(`${WORKER_URL}/get-results`);
+    const data = await res.json();
+    if (data.results && data.results.length > 0) {
+      results = data.results;
+      localStorage.setItem('vj_results', JSON.stringify(data));
+      renderResults(data.timestamp);
+      return;
+    }
+  } catch(e) { console.warn('Notion load failed, falling back to localStorage:', e.message); }
+
+  // Fallback to localStorage
   const saved = localStorage.getItem('vj_results');
   if (saved) {
     try {
@@ -353,6 +366,17 @@ function saveResultsToStorage(timestamp) {
   localStorage.setItem('vj_results', JSON.stringify({ results, timestamp }));
 }
 
+async function saveResultToNotion(result, timestamp) {
+  // Fire-and-forget persist to Notion
+  try {
+    await fetch(`${WORKER_URL}/save-result`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ result, timestamp })
+    });
+  } catch(e) { console.warn('Notion save failed:', e.message); }
+}
+
 async function runBatch() {
   if (isProcessing) return;
   const batchText = document.getElementById('batchInput').value.trim();
@@ -365,6 +389,8 @@ async function runBatch() {
 
   isProcessing = true;
   results = [];
+  // Clear previous Notion results before new batch
+  try { await fetch(`${WORKER_URL}/clear-results`, { method: 'POST' }); } catch(e) {}
   document.getElementById('runBtn').disabled = true;
   document.getElementById('processing-section').style.display = 'block';
   document.getElementById('results-section').style.display = 'none';
@@ -383,9 +409,12 @@ async function runBatch() {
       result._raw = posting;
       results.push(result);
       saveResultsToStorage(timestamp);
+      saveResultToNotion(result, timestamp);
     } catch(e) {
-      results.push({ role_title: `Posting ${i+1}`, company: 'Unknown', location: '', overall: 0, pass: false, rejection_reason: 'Processing error: ' + e.message, _raw: posting });
+      const errResult = { role_title: `Posting ${i+1}`, company: 'Unknown', location: '', overall: 0, pass: false, rejection_reason: 'Processing error: ' + e.message, _raw: posting };
+      results.push(errResult);
       saveResultsToStorage(timestamp);
+      saveResultToNotion(errResult, timestamp);
     }
 
     await new Promise(r => setTimeout(r, 800));
@@ -574,13 +603,14 @@ function clearBatch() {
   document.getElementById('batchInput').value = '';
 }
 
-function clearResults() {
-  if (!confirm('Clear all saved results?')) return;
+async function clearResults() {
+  if (!confirm('Clear all saved results? This removes them from Notion and local storage.')) return;
   localStorage.removeItem('vj_results');
   results = [];
   document.getElementById('results-section').style.display = 'none';
   document.getElementById('passingResults').innerHTML = '';
   document.getElementById('failingResults').innerHTML = '';
+  try { await fetch(`${WORKER_URL}/clear-results`, { method: 'POST' }); } catch(e) { console.warn('Notion clear failed:', e.message); }
 }
 </script>
 </body>
