@@ -436,9 +436,17 @@ function upsertResult(result) {
   result._timestamp = new Date().toISOString();
   const existingIndex = results.findIndex(r => r._key === key);
   if (existingIndex >= 0) {
+    const existing = results[existingIndex];
+    result._versions = [...(existing._versions || [])];
+    const snapshot = { ...existing };
+    delete snapshot._versions;
+    delete snapshot._raw;
+    result._versions.push(snapshot);
+    result._isMaster = false;
     results[existingIndex] = result;
     return existingIndex;
   } else {
+    result._versions = [];
     results.push(result);
     return results.length - 1;
   }
@@ -553,8 +561,26 @@ async function runBatch() {
       result._raw = posting;
       const idx = upsertResult(result);
       currentBatchKeys.push(result._key);
+
+      // Synthesize master version if this role has previous versions and passes
+      if (result._versions.length > 0 && result.pass) {
+        document.getElementById('progressDetail').textContent = `Synthesizing master from ${result._versions.length + 1} scans...`;
+        try {
+          const master = await synthesizeVersions(result, posting);
+          master._key = result._key;
+          master._timestamp = result._timestamp;
+          master._versions = result._versions;
+          master._isMaster = true;
+          master._raw = posting;
+          master.dimensions = result.dimensions;
+          master.overall = result.overall;
+          master.pass = result.pass;
+          results[idx] = master;
+        } catch(e2) { console.warn('Synthesis failed, keeping latest:', e2.message); }
+      }
+
       saveResultsToStorage(timestamp);
-      saveResultToNotion(result, timestamp, idx);
+      saveResultToNotion(results[idx], timestamp, idx);
     } catch(e) {
       const errResult = { role_title: `Posting ${i+1}`, company: 'Unknown', location: '', overall: 0, pass: false, rejection_reason: 'Processing error: ' + e.message, _raw: posting };
       const idx = upsertResult(errResult);
@@ -587,6 +613,29 @@ async function callAgent(model, maxTokens, system, userContent) {
     body: JSON.stringify({ model, max_tokens: maxTokens, system, messages: [{ role: 'user', content: userContent }] })
   });
   return res.json();
+}
+
+async function synthesizeVersions(currentResult, posting) {
+  const allVersions = [...currentResult._versions, currentResult];
+  const versionsText = allVersions.map((v, i) => {
+    const vData = { resume: v.resume, manual_fields: v.manual_fields, physics_connection: v.physics_connection, communication_map: v.communication_map, tailoring_diff: v.tailoring_diff, defensibility: v.defensibility, team_context: v.team_context };
+    return `=== VERSION ${i + 1} (score: ${v.overall}) ===\n` + JSON.stringify(vData);
+  }).join('\n\n');
+
+  const synthesisPrompt = `You have ${allVersions.length} independent analysis passes for the same job posting. Each produced slightly different resume tailoring, defensibility assessments, and physics connections. Synthesize ONE master version that cherry-picks the strongest elements:
+
+- Best phrased resume bullets (tightest, most defensible, most role-specific wording from any version)
+- Strongest physics connection arguments
+- Most thorough defensibility assessments (pick the most honest and useful probe questions and answers from across versions)
+- Best Workday field prose
+- Best tailoring decisions and team context
+
+Return the SAME JSON output format. This should be BETTER than any individual version because you have multiple independent reasoning attempts to draw from. For the tailoring_diff, note which versions each decision was drawn from.`;
+
+  const fullSystem = synthesisPrompt + '\n\n=== KNOWLEDGE BASE ===\n' + cachedKnowledge;
+  const userContent = 'Job posting:\n\n' + posting + '\n\n=== ALL VERSIONS ===\n' + versionsText;
+  const data = await callAgent('claude-opus-4-6', 8000, fullSystem, userContent);
+  return parseAgentResponse(data);
 }
 
 async function analyzePosting(posting) {
@@ -750,6 +799,7 @@ function buildJobCard(r, type, globalIndex) {
         <span class="job-title">${escapeHtml(r.role_title || 'Unknown role')}</span>
         <span class="job-company">${escapeHtml(r.company || '')}${r.location ? ' — ' + escapeHtml(r.location) : ''}</span>
         <span class="sync-icon ${syncClass}" id="sync-${globalIndex}">${syncLabel}</span>
+        ${r._isMaster ? `<span class="notion-badge" style="background:#e1f0ff;color:#2563eb">Synthesized from ${(r._versions||[]).length + 1} versions</span>` : ''}
       </div>
       <div style="display:flex;align-items:center;gap:8px">
         <span class="score-badge ${badgeClass}">${badgeText}</span>
@@ -765,6 +815,7 @@ function buildJobCard(r, type, globalIndex) {
         <button class="tab" onclick="switchTab(this,'comm')">Comm map</button>
         <button class="tab" onclick="switchTab(this,'tailoring')">Tailoring</button>
         <button class="tab" onclick="switchTab(this,'defense')">Defensibility</button>
+        ${(r._versions && r._versions.length > 0) ? `<button class="tab" onclick="switchTab(this,'versions')">Versions (${r._versions.length})</button>` : ''}
       </div>
       <div class="tab-content active" data-tab="scoring">${buildScoringTab(r)}</div>
       <div class="tab-content" data-tab="resume">${buildResumeTab(r)}</div>
@@ -773,6 +824,7 @@ function buildJobCard(r, type, globalIndex) {
       <div class="tab-content" data-tab="comm">${buildCommTab(r)}</div>
       <div class="tab-content" data-tab="tailoring">${buildTailoringTab(r)}</div>
       <div class="tab-content" data-tab="defense">${buildDefenseTab(r)}</div>
+      ${(r._versions && r._versions.length > 0) ? `<div class="tab-content" data-tab="versions">${buildVersionsTab(r)}</div>` : ''}
     </div>`;
   return card;
 }
@@ -880,6 +932,29 @@ function buildTailoringTab(r) {
   }
 
   return html || '<p style="font-size:13px;color:#999;font-style:italic">No tailoring diff data.</p>';
+}
+
+function buildVersionsTab(r) {
+  if (!r._versions || r._versions.length === 0) return '<p style="font-size:13px;color:#999;font-style:italic">No previous versions.</p>';
+  let html = '';
+  if (r._isMaster) {
+    html += '<div style="font-size:12px;color:#2563eb;background:#e1f0ff;padding:8px 12px;border-radius:6px;margin-bottom:12px">This is a synthesized master version. The resume, physics connection, and defensibility above are the best elements cherry-picked from all versions below.</div>';
+  }
+  r._versions.forEach((v, i) => {
+    const score = Math.round(v.overall || 0);
+    const time = v._timestamp ? new Date(v._timestamp).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Unknown time';
+    const color = v.pass ? '#0a6040' : '#8b2020';
+    html += `<div style="margin-bottom:12px;padding:12px;border:0.5px solid #e0e0e0;border-radius:8px">`;
+    html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px;font-weight:500">Version ${i + 1}</span><span style="font-size:12px;color:#999">${time}</span><span style="font-size:12px;font-weight:500;color:${color}">${score}/100</span></div>`;
+    if (v.resume) {
+      html += `<details style="margin-bottom:6px"><summary style="font-size:11px;color:#666;cursor:pointer">Resume</summary><div class="resume-box" style="max-height:200px;margin-top:6px">${escapeHtml(v.resume)}</div></details>`;
+    }
+    if (v.physics_connection) {
+      html += `<details><summary style="font-size:11px;color:#666;cursor:pointer">Physics connection</summary><div style="font-size:12px;color:#444;line-height:1.6;margin-top:6px;padding:8px;background:#f8f8f6;border-radius:6px">${escapeHtml(v.physics_connection)}</div></details>`;
+    }
+    html += '</div>';
+  });
+  return html;
 }
 
 function buildDefenseTab(r) {
