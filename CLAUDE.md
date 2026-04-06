@@ -184,6 +184,9 @@ Lean Six Sigma IASSC Green Belt: Study via GoLeanSixSigma YouTube, sit exam duri
 - Semiconductor fab process experience
 - Active security clearance
 
+### Credential Gap Strategy (identified April 6, 2026)
+Fab process experience is the most impactful gap to close. Tier 1 target roles (KLA TSE, ASML CSE, Onto AE, Applied Materials GPS) consistently list fab experience, cleanroom operations, SPC, and process control as preferred qualifications. Roles at Intel, Micron, or similar fabs that provide hands-on fab experience should be treated as credential builders, not career detours. The strategic profile being built: Hopkins optical inspection theory (Tiberi) + multi-physics simulation depth (Candela) + fab process experience (next role) = strongest possible AE/TSE candidate at BS level. Scoring rubric updated to reflect this with "credential builder" tier (D4 60-69).
+
 ---
 
 ## COMPLETE RESUME VERSIONS
