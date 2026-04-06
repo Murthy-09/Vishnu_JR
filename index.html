@@ -90,24 +90,32 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 .processing-card { background: #fff; border: 0.5px solid #e0e0e0; border-radius: 12px; padding: 1.25rem; margin-bottom: 14px; }
 .fail-card { background: #fff; border: 0.5px solid #f0d0d0; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
 .fail-reason { font-size: 12px; color: #888; }
-.sync-icon { font-size: 11px; margin-left: 6px; }
-.sync-pending { color: #999; }
-.sync-ok { color: #0a6040; }
-.sync-fail { color: #c0392b; }
-#history-section { margin-top: 24px; }
-.history-toggle { display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 10px 0; }
-.history-toggle:hover .history-title { color: #333; }
-.history-title { font-size: 14px; font-weight: 500; color: #666; }
+.sync-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-left: 6px; vertical-align: middle; }
+.sync-dot.pending { background: #ccc; animation: pulse 1s ease-in-out infinite; }
+.sync-dot.ok { background: #1a9e6e; }
+.sync-dot.fail { background: #c0392b; }
+@keyframes pulse { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
+#history-section { margin-top: 14px; }
+.history-card { background: #fff; border: 0.5px solid #e0e0e0; border-radius: 12px; overflow: hidden; }
+.history-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 1.25rem; }
+.history-header-left { display: flex; align-items: center; gap: 8px; }
+.history-title { font-size: 13px; font-weight: 500; color: #1a1a1a; }
 .history-count { font-size: 12px; color: #999; }
-.history-chevron { font-size: 12px; color: #999; transition: transform 0.2s; }
-.history-chevron.open { transform: rotate(180deg); }
+.history-toggle-btn { font-size: 12px; padding: 4px 10px; cursor: pointer; border: 0.5px solid #ddd; border-radius: 6px; background: #fff; color: #666; }
+.history-toggle-btn:hover { background: #f0f0ee; }
 .history-body { display: none; }
 .history-body.open { display: block; }
-.history-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 0.5px solid #f0f0f0; font-size: 13px; cursor: pointer; }
-.history-item:hover { background: #fafafa; }
-.history-item-title { font-weight: 500; }
-.history-item-meta { font-size: 11px; color: #999; }
-.history-item-score { font-size: 12px; font-weight: 500; padding: 2px 8px; border-radius: 12px; }
+.history-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 1.25rem; border-top: 0.5px solid #f0f0f0; font-size: 13px; cursor: pointer; transition: background 0.1s; }
+.history-item:hover { background: #fafaf8; }
+.history-item.pass-border { border-left: 3px solid #1a9e6e; }
+.history-item.cred-border { border-left: 3px solid #d4880a; }
+.history-item-left { display: flex; flex-direction: column; gap: 2px; }
+.history-item-title { font-size: 13px; font-weight: 500; color: #1a1a1a; }
+.history-item-company { font-size: 12px; color: #888; }
+.history-item-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.history-item-meta { font-size: 11px; color: #aaa; }
+.score-cred { background: #fef9e7; color: #8b5e0a; }
+.batch-label { font-size: 11px; font-weight: 500; color: #999; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
 </style>
 </head>
 <body>
@@ -139,7 +147,6 @@ Paste job posting 3 here..."></textarea>
   <div class="btn-row">
     <button class="primary" id="runBtn" onclick="runBatch()">Process all postings</button>
     <button onclick="clearBatch()">Clear input</button>
-    <button class="danger" onclick="clearResults()">Clear saved results</button>
     <span id="spinner" style="display:none"><span class="spinner"></span></span>
     <span id="statusMsg" class="status-msg"></span>
   </div>
@@ -166,16 +173,20 @@ Paste job posting 3 here..."></textarea>
 </div>
 
 <div id="history-section" style="display:none">
-  <div class="history-toggle" onclick="toggleHistory()">
-    <div>
-      <span class="history-title">History</span>
-      <span class="history-count" id="historyCount"></span>
+  <div class="history-card">
+    <div class="history-header">
+      <div class="history-header-left">
+        <span class="history-title">History</span>
+        <span class="history-count" id="historyCount"></span>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="history-toggle-btn" onclick="toggleHistory()">
+          <span id="historyToggleText">Show</span>
+        </button>
+        <button class="history-toggle-btn" style="color:#c0392b;border-color:#f0c0c0" onclick="clearAllHistory()">Clear</button>
+      </div>
     </div>
-    <span class="history-chevron" id="historyChevron">▼</span>
-  </div>
-  <div class="history-body" id="historyBody"></div>
-  <div style="margin-top:8px">
-    <button class="danger" onclick="clearAllHistory()">Clear all history</button>
+    <div class="history-body" id="historyBody"></div>
   </div>
 </div>
 
@@ -431,6 +442,11 @@ function getResultKey(r) {
 }
 
 function upsertResult(result) {
+  // Skip results with no meaningful identity
+  if (!result.role_title || !result.company || result.role_title.startsWith('Posting')) {
+    results.push(result);
+    return results.length - 1;
+  }
   const key = getResultKey(result);
   result._key = key;
   result._timestamp = new Date().toISOString();
@@ -525,10 +541,8 @@ function updateSyncIcon(index) {
   if (!el) return;
   const r = results[index];
   if (!r || !r._sync) return;
-  const labels = { pending: 'syncing...', ok: 'synced', fail: 'sync failed' };
-  const classes = { pending: 'sync-pending', ok: 'sync-ok', fail: 'sync-fail' };
-  el.textContent = labels[r._sync];
-  el.className = 'sync-icon ' + classes[r._sync];
+  el.className = 'sync-dot ' + r._sync;
+  el.title = r._sync;
 }
 
 async function runBatch() {
@@ -721,19 +735,20 @@ function renderResults(timestamp) {
 
 function renderHistory() {
   const historySection = document.getElementById('history-section');
-  if (results.length === 0) {
+  // Filter out bad data
+  const validResults = results.filter(r => r.role_title && !r.role_title.startsWith('Posting'));
+  if (validResults.length === 0) {
     historySection.style.display = 'none';
     return;
   }
 
   historySection.style.display = 'block';
-  document.getElementById('historyCount').textContent = `(${results.length} roles)`;
+  document.getElementById('historyCount').textContent = `${validResults.length} roles`;
 
   const body = document.getElementById('historyBody');
   body.innerHTML = '';
 
-  // Sort by timestamp descending (newest first)
-  const sorted = [...results].sort((a, b) => {
+  const sorted = [...validResults].sort((a, b) => {
     const ta = a._timestamp || '';
     const tb = b._timestamp || '';
     return tb.localeCompare(ta);
@@ -743,31 +758,31 @@ function renderHistory() {
     const gi = results.indexOf(r);
     const score = Math.round(r.overall || 0);
     const isPassing = r.pass && !r.already_applied;
-    const scoreColor = isPassing ? '#e1f5ee' : '#fce8e8';
-    const scoreTextColor = isPassing ? '#0a6040' : '#8b2020';
+    const isCred = !isPassing && score >= 60 && score < 70;
+    const badgeClass = isPassing ? 'score-pass' : isCred ? 'score-cred' : 'score-fail';
+    const borderClass = isPassing ? ' pass-border' : isCred ? ' cred-border' : '';
     const time = r._timestamp ? new Date(r._timestamp).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
+    const masterBadge = r._isMaster ? ' <span class="notion-badge" style="background:#e1f0ff;color:#2563eb;font-size:10px">master</span>' : '';
 
     const item = document.createElement('div');
-    item.className = 'history-item';
+    item.className = 'history-item' + borderClass;
     item.onclick = () => toggleHistoryCard(gi);
-    item.innerHTML = `<div><span class="history-item-title">${escapeHtml(r.role_title || 'Unknown')}</span> <span style="font-size:12px;color:#888">— ${escapeHtml(r.company || '')}</span></div><div style="display:flex;align-items:center;gap:8px"><span class="history-item-meta">${time}</span><span class="history-item-score" style="background:${scoreColor};color:${scoreTextColor}">${score}</span></div>`;
+    item.innerHTML = `<div class="history-item-left"><span class="history-item-title">${escapeHtml(r.role_title)}${masterBadge}</span><span class="history-item-company">${escapeHtml(r.company || '')}${r.location ? ' — ' + escapeHtml(r.location) : ''}</span></div><div class="history-item-right"><span class="history-item-meta">${time}</span><span class="score-badge ${badgeClass}" style="font-size:12px;padding:2px 8px">${score}</span></div>`;
     body.appendChild(item);
 
-    // Expandable card container (hidden by default)
     const cardContainer = document.createElement('div');
     cardContainer.id = 'history-card-' + gi;
     cardContainer.style.display = 'none';
-    cardContainer.style.padding = '0 4px 8px';
+    cardContainer.style.padding = '4px 1.25rem 12px';
     body.appendChild(cardContainer);
   });
 }
 
 function toggleHistory() {
   const body = document.getElementById('historyBody');
-  const chevron = document.getElementById('historyChevron');
   const isOpen = body.classList.contains('open');
   body.classList.toggle('open', !isOpen);
-  chevron.classList.toggle('open', !isOpen);
+  document.getElementById('historyToggleText').textContent = isOpen ? 'Show' : 'Hide';
 }
 
 function toggleHistoryCard(gi) {
@@ -789,20 +804,18 @@ function buildJobCard(r, type, globalIndex) {
   const score = Math.round(r.overall || 0);
   const badgeClass = r.already_applied ? 'score-applied' : (r.pass ? 'score-pass' : 'score-fail');
   const badgeText = r.already_applied ? 'Applied' : score + '/100';
-  const syncState = r._sync || '';
-  const syncLabel = { pending: 'syncing...', ok: 'synced', fail: 'sync failed' }[syncState] || '';
-  const syncClass = { pending: 'sync-pending', ok: 'sync-ok', fail: 'sync-fail' }[syncState] || 'sync-pending';
+  const syncDotClass = { pending: 'pending', ok: 'ok', fail: 'fail' }[r._sync] || '';
 
   card.innerHTML = `
     <div class="job-card-header" onclick="toggleCard(this)">
       <div class="job-title-row">
         <span class="job-title">${escapeHtml(r.role_title || 'Unknown role')}</span>
         <span class="job-company">${escapeHtml(r.company || '')}${r.location ? ' — ' + escapeHtml(r.location) : ''}</span>
-        <span class="sync-icon ${syncClass}" id="sync-${globalIndex}">${syncLabel}</span>
         ${r._isMaster ? `<span class="notion-badge" style="background:#e1f0ff;color:#2563eb">Synthesized from ${(r._versions||[]).length + 1} versions</span>` : ''}
       </div>
       <div style="display:flex;align-items:center;gap:8px">
         <span class="score-badge ${badgeClass}">${badgeText}</span>
+        ${syncDotClass ? `<span class="sync-dot ${syncDotClass}" id="sync-${globalIndex}" title="${r._sync || ''}"></span>` : ''}
         <span class="chevron">▼</span>
       </div>
     </div>
