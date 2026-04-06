@@ -730,7 +730,7 @@ Return the SAME JSON output format. This should be BETTER than any individual ve
 
 async function analyzePosting(posting) {
   // Step 1: Score with Sonnet (fast, cheap) -- SCORING_PROMPT has condensed profile built in, no need for full Notion KB
-  const scoreData = await callAgent('claude-sonnet-4-6', 3000, SCORING_PROMPT, 'Score this job posting and return the JSON:\n\n' + posting);
+  const scoreData = await callAgent('claude-sonnet-4-6', 4096, SCORING_PROMPT, 'Score this job posting and return the JSON. Keep reasoning to 1 sentence per dimension and knowledge_nodes relevance to under 15 words each:\n\n' + posting);
   const scoreResult = parseAgentResponse(scoreData);
 
   // Validate weighted average
