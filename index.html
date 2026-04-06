@@ -540,9 +540,8 @@ async function callAgent(model, maxTokens, system, userContent) {
 }
 
 async function analyzePosting(posting) {
-  // Step 1: Score with Sonnet (fast, cheap)
-  const scoringSystem = SCORING_PROMPT + '\n\n=== LIVE KNOWLEDGE BASE FROM NOTION ===\n' + cachedKnowledge;
-  const scoreData = await callAgent('claude-sonnet-4-6', 1500, scoringSystem, 'Score this job posting and return the JSON:\n\n' + posting);
+  // Step 1: Score with Sonnet (fast, cheap) -- SCORING_PROMPT has condensed profile built in, no need for full Notion KB
+  const scoreData = await callAgent('claude-sonnet-4-6', 1500, SCORING_PROMPT, 'Score this job posting and return the JSON:\n\n' + posting);
   const scoreResult = parseAgentResponse(scoreData);
 
   // Validate weighted average
