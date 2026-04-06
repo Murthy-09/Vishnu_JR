@@ -1132,6 +1132,19 @@ let selectedNode = null;
 function loadGraph() {
   const saved = localStorage.getItem('vj_graph');
   if (saved) { try { knowledgeGraph = JSON.parse(saved); } catch(e) {} }
+  // Rebuild from any results that have knowledge_nodes but aren't in the graph yet
+  let added = false;
+  results.forEach(r => {
+    if (r.knowledge_nodes && Array.isArray(r.knowledge_nodes)) {
+      r.knowledge_nodes.forEach(node => {
+        if (!node.concept) return;
+        const key = node.concept.toLowerCase().trim();
+        if (!knowledgeGraph[key]) { added = true; }
+      });
+      mergeNodes(r);
+    }
+  });
+  if (added) saveGraph();
   rebuildGraphArrays();
   renderGraph();
 }
@@ -1152,7 +1165,12 @@ function mergeNodes(result) {
       knowledgeGraph[key] = { concept: node.concept, category: node.category || 'optical_systems', sources: [], edges: [] };
     }
     const existing = knowledgeGraph[key];
-    if (!existing.sources.find(s => s.company === source.company && s.role_title === source.role_title)) {
+    // Update relevance if same source re-scanned, otherwise add new source
+    const existingSource = existing.sources.find(s => s.company === source.company && s.role_title === source.role_title);
+    if (existingSource) {
+      if (node.relevance) existingSource.relevance = node.relevance;
+      existingSource.score = source.score;
+    } else {
       existing.sources.push({ ...source, relevance: node.relevance || '' });
     }
   });
