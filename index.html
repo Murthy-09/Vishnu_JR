@@ -6,22 +6,22 @@
 <title>Vishnu JR — Batch Job Agent</title>
 <style>
 :root {
-  --bg: #0f1117; --bg-card: #181b24; --bg-card-hover: #1e2230; --bg-input: #12141c;
-  --border: #2a2d3a; --border-subtle: #1f222e;
-  --text: #e8e6e3; --text-dim: #8b8d98; --text-muted: #555868;
+  --bg: #f8f6f1; --bg-card: #ffffff; --bg-card-hover: #f5f3ee; --bg-input: #faf9f6;
+  --border: #e5e2db; --border-subtle: #eeeae4;
+  --text: #1a1a1a; --text-dim: #6b6b6b; --text-muted: #9a9a9a;
   --violet: #7c3aed; --blue: #3b82f6; --cyan: #06b6d4; --green: #10b981;
-  --yellow: #f59e0b; --orange: #f97316; --red: #ef4444;
-  --violet-hover: #6d28d9;
-  --spectrum: linear-gradient(90deg, #7c3aed, #3b82f6, #06b6d4, #10b981, #f59e0b, #f97316, #ef4444);
+  --yellow: #d97706; --orange: #f97316; --red: #dc2626;
+  --violet-hover: #6d28d9; --violet-light: #f3f0ff; --green-light: #ecfdf5;
+  --spectrum: linear-gradient(90deg, #7c3aed, #10b981);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; background-image: radial-gradient(rgba(124,58,237,0.04) 1px, transparent 1px), radial-gradient(rgba(59,130,246,0.03) 1px, transparent 1px); background-size: 32px 32px, 48px 48px; background-position: 0 0, 16px 16px; }
+body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 .container { max-width: 920px; margin: 0 auto; padding: 2rem 1.5rem; }
 h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 4px; display: flex; align-items: center; gap: 12px; }
 h1::after { content: ''; display: block; height: 3px; width: 100px; margin-top: 10px; background: var(--spectrum); border-radius: 2px; }
 .subtitle { font-size: 14px; color: var(--text-dim); margin-bottom: 1.5rem; line-height: 1.6; }
-.card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 14px; transition: border-color 0.3s, box-shadow 0.3s; }
-.card:hover { border-color: rgba(124,58,237,0.3); box-shadow: 0 0 20px rgba(124,58,237,0.05); }
+.card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 14px; transition: border-color 0.3s, box-shadow 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+.card:hover { border-color: rgba(124,58,237,0.25); box-shadow: 0 2px 8px rgba(124,58,237,0.06); }
 label { font-size: 14px; color: var(--text-dim); display: block; margin-bottom: 6px; font-weight: 500; }
 textarea { width: 100%; padding: 12px 14px; font-size: 14px; font-family: inherit; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-input); color: var(--text); resize: vertical; line-height: 1.6; }
 textarea:focus { outline: none; border-color: rgba(124,58,237,0.5); box-shadow: 0 0 0 3px rgba(124,58,237,0.08); background: var(--bg-card); }
@@ -32,8 +32,8 @@ button:hover { background: var(--bg-card-hover); border-color: rgba(124,58,237,0
 button:active { transform: scale(0.97); }
 button.primary { background: var(--violet); color: #fff; border-color: var(--violet); }
 button.primary:hover { background: var(--violet-hover); box-shadow: 0 0 16px rgba(124,58,237,0.3); }
-button.danger { background: var(--bg-card); color: var(--red); border-color: rgba(239,68,68,0.3); }
-button.danger:hover { background: rgba(239,68,68,0.08); }
+button.danger { background: var(--bg-card); color: var(--red); border-color: #fecaca; }
+button.danger:hover { background: #fef2f2; }
 button:disabled { opacity: 0.4; cursor: not-allowed; }
 .spinner { display: inline-block; width: 15px; height: 15px; border: 2px solid var(--border); border-top-color: var(--violet); border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; }
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -45,10 +45,8 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 .kb-status { font-size: 13px; color: var(--text-muted); }
 .kb-status.loaded { color: var(--green); }
 .kb-status.error { color: var(--red); }
-.notion-badge { display: inline-block; font-size: 12px; padding: 3px 10px; background: rgba(124,58,237,0.12); border-radius: 4px; color: #a78bfa; margin-left: 10px; }
-/* Pixel art: lens for Surf header */
-.lens-art { display: inline-block; width: 1px; height: 1px; transform: scale(2); transform-origin: center; vertical-align: middle;
-  box-shadow: 3px 0px 0 var(--cyan), 4px 0px 0 var(--cyan), 5px 0px 0 var(--cyan), 2px 1px 0 var(--cyan), 6px 1px 0 var(--cyan), 1px 2px 0 var(--blue), 7px 2px 0 var(--blue), 1px 3px 0 var(--blue), 7px 3px 0 var(--blue), 1px 4px 0 var(--violet), 7px 4px 0 var(--violet), 2px 5px 0 var(--violet), 6px 5px 0 var(--violet), 3px 6px 0 var(--violet), 4px 6px 0 var(--violet), 5px 6px 0 var(--violet), 9px 3px 0 var(--text-dim), 10px 3px 0 var(--text-dim), 11px 3px 0 var(--text-dim), 12px 3px 0 var(--text-dim); }
+.notion-badge { display: inline-block; font-size: 12px; padding: 3px 10px; background: var(--violet-light); border-radius: 4px; color: var(--violet); margin-left: 10px; font-weight: 500; }
+.surf-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px rgba(16,185,129,0.4); }
 .progress-bar-bg { height: 4px; background: var(--border-subtle); border-radius: 2px; margin: 12px 0; overflow: hidden; }
 .progress-bar-fill { height: 100%; background: var(--spectrum); border-radius: 2px; transition: width 0.4s cubic-bezier(0.4,0,0.2,1); }
 .progress-label { font-size: 12px; color: var(--text-dim); margin-bottom: 4px; }
@@ -65,10 +63,10 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 .job-company { font-size: 13px; color: var(--text-dim); }
 .score-badge { font-size: 13px; font-weight: 500; padding: 4px 12px; border-radius: 20px; animation: scoreReveal 0.3s ease forwards; }
 @keyframes scoreReveal { 0% { transform: scale(0.8); opacity: 0; } 50% { transform: scale(1.05); } 100% { transform: scale(1); opacity: 1; } }
-.score-pass { background: rgba(16,185,129,0.15); color: #34d399; }
-.score-fail { background: rgba(239,68,68,0.15); color: #f87171; }
-.score-applied { background: rgba(139,141,152,0.15); color: var(--text-dim); }
-.score-cred { background: rgba(245,158,11,0.15); color: #fbbf24; }
+.score-pass { background: #ecfdf5; color: #047857; }
+.score-fail { background: #fef2f2; color: #b91c1c; }
+.score-applied { background: #f5f5f4; color: var(--text-muted); }
+.score-cred { background: #fffbeb; color: #92400e; }
 .chevron { font-size: 12px; color: var(--text-muted); transition: transform 0.25s ease; }
 .chevron.open { transform: rotate(180deg); }
 .job-card-body { display: none; border-top: 1px solid var(--border-subtle); }
@@ -98,24 +96,24 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 .field-entry { margin-bottom: 16px; }
 .field-role { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
 .field-text { font-size: 13px; color: var(--text-dim); line-height: 1.6; background: var(--bg-input); padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); }
-.physics-map { font-size: 13px; color: var(--text); line-height: 1.7; background: rgba(124,58,237,0.08); padding: 14px; border-radius: 8px; border-left: 3px solid var(--violet); }
-.comm-map { font-size: 13px; color: var(--text); line-height: 1.7; background: rgba(6,182,212,0.08); padding: 14px; border-radius: 8px; border-left: 3px solid var(--cyan); }
+.physics-map { font-size: 13px; color: var(--text); line-height: 1.7; background: var(--violet-light); padding: 14px; border-radius: 8px; border-left: 3px solid var(--violet); }
+.comm-map { font-size: 13px; color: var(--text); line-height: 1.7; background: var(--green-light); padding: 14px; border-radius: 8px; border-left: 3px solid var(--green); }
 .def-item { margin-bottom: 10px; padding: 10px 12px; border-radius: 8px; }
-.def-low { background: rgba(16,185,129,0.08); border-left: 3px solid var(--green); }
-.def-med { background: rgba(245,158,11,0.08); border-left: 3px solid var(--yellow); }
-.def-high { background: rgba(239,68,68,0.08); border-left: 3px solid var(--red); }
+.def-low { background: #ecfdf5; border-left: 3px solid var(--green); }
+.def-med { background: #fffbeb; border-left: 3px solid var(--yellow); }
+.def-high { background: #fef2f2; border-left: 3px solid var(--red); }
 .def-bullet { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
 .def-risk { font-size: 12px; font-weight: 500; margin-bottom: 3px; }
-.def-low .def-risk { color: #34d399; }
-.def-med .def-risk { color: #fbbf24; }
-.def-high .def-risk { color: #f87171; }
+.def-low .def-risk { color: #047857; }
+.def-med .def-risk { color: #92400e; }
+.def-high .def-risk { color: #b91c1c; }
 .def-brief { font-size: 12px; color: var(--text-dim); line-height: 1.5; }
 .copy-btn { font-size: 11px; padding: 4px 10px; float: right; margin-bottom: 6px; }
 .overall-big { font-size: 42px; font-weight: 600; background: var(--spectrum); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
 .overall-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 14px; }
 #results-section { display: none; }
 .processing-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 14px; }
-.fail-card { background: var(--bg-card); border: 1px solid rgba(239,68,68,0.2); border-radius: 10px; padding: 12px 16px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+.fail-card { background: var(--bg-card); border: 1px solid #fecaca; border-radius: 10px; padding: 12px 16px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
 .fail-reason { font-size: 12px; color: var(--text-muted); }
 .sync-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-left: 6px; vertical-align: middle; }
 .sync-dot.pending { background: var(--text-muted); animation: pulse 1s ease-in-out infinite; }
@@ -163,16 +161,15 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 .surf-source:last-child { border-bottom: none; }
 .surf-source-company { font-weight: 500; color: var(--text); }
 .surf-empty { padding: 3rem 2rem; text-align: center; color: var(--text-muted); font-size: 14px; line-height: 1.6; }
-/* Pixel art: optical prism */
-.prism-art { display: inline-block; width: 20px; height: 32px; vertical-align: middle; transform: scale(2.5); transform-origin: center center;
-  box-shadow: -8px 7px 0 var(--text), -7px 7px 0 var(--text), -6px 7px 0 var(--text), -5px 7px 0 var(--text), -4px 7px 0 var(--text), 0px 0px 0 var(--text-dim), -1px 2px 0 var(--text-dim), 1px 2px 0 var(--text-dim), -2px 4px 0 var(--text-dim), 2px 4px 0 var(--text-dim), -3px 6px 0 var(--text-dim), -2px 6px 0 var(--text-muted), -1px 6px 0 var(--text-muted), 0px 6px 0 var(--text-muted), 1px 6px 0 var(--text-muted), 2px 6px 0 var(--text-muted), 3px 6px 0 var(--text-dim), -3px 8px 0 var(--text-dim), 3px 8px 0 var(--text-dim), -4px 10px 0 var(--text-dim), 4px 10px 0 var(--text-dim), -5px 12px 0 var(--text-dim), -4px 12px 0 var(--text-dim), -3px 12px 0 var(--text-dim), -2px 12px 0 var(--text-dim), -1px 12px 0 var(--text-dim), 0px 12px 0 var(--text-dim), 1px 12px 0 var(--text-dim), 2px 12px 0 var(--text-dim), 3px 12px 0 var(--text-dim), 4px 12px 0 var(--text-dim), 5px 12px 0 var(--text-dim), 5px 4px 0 var(--violet), 6px 3px 0 var(--violet), 7px 2px 0 var(--violet), 5px 5px 0 var(--blue), 6px 5px 0 var(--blue), 7px 4px 0 var(--blue), 5px 6px 0 var(--cyan), 6px 6px 0 var(--cyan), 7px 6px 0 var(--cyan), 5px 7px 0 var(--green), 6px 7px 0 var(--green), 7px 7px 0 var(--green), 5px 8px 0 var(--yellow), 6px 8px 0 var(--yellow), 7px 9px 0 var(--yellow), 5px 9px 0 var(--orange), 6px 10px 0 var(--orange), 7px 11px 0 var(--orange), 5px 10px 0 var(--red), 6px 11px 0 var(--red), 7px 12px 0 var(--red); }
+/* Title accent dot */
+.title-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--spectrum); margin-right: 4px; }
 </style>
 </head>
 <body>
 <div class="app-layout">
 <div class="main-col">
 
-<h1><span class="prism-art"></span>Vishnu JR <span class="notion-badge">Batch Mode</span></h1>
+<h1><span class="title-dot"></span>Vishnu JR <span class="notion-badge">Batch Mode</span></h1>
 <p class="subtitle">Paste up to 20 job postings separated by --- on its own line. Scores each across 7 dimensions, generates application packages for roles that pass 70%.</p>
 
 
@@ -207,7 +204,7 @@ Paste job posting 3 here..."></textarea>
   <div class="processing-card">
     <div class="progress-label" id="progressLabel">Processing...</div>
     <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressBar" style="width:0%"></div></div>
-    <div style="font-size:12px;color:#555868;margin-top:6px" id="progressDetail"></div>
+    <div style="font-size:12px;color:#9a9a9a;margin-top:6px" id="progressDetail"></div>
   </div>
 </div>
 
@@ -217,7 +214,7 @@ Paste job posting 3 here..."></textarea>
       <div class="results-title">Results</div>
       <div class="results-summary" id="resultsSummary"></div>
     </div>
-    <div style="font-size:12px;color:#555868" id="resultsTimestamp"></div>
+    <div style="font-size:12px;color:#9a9a9a" id="resultsTimestamp"></div>
   </div>
   <div id="passingResults"></div>
   <div id="failingResults" style="margin-top:16px"></div>
@@ -234,7 +231,7 @@ Paste job posting 3 here..."></textarea>
         <button class="history-toggle-btn" onclick="toggleHistory()">
           <span id="historyToggleText">Show</span>
         </button>
-        <button class="history-toggle-btn" style="color:var(--red);border-color:rgba(239,68,68,0.3)" onclick="clearAllHistory()">Clear</button>
+        <button class="history-toggle-btn" style="color:var(--red);border-color:#fecaca" onclick="clearAllHistory()">Clear</button>
       </div>
     </div>
     <div class="history-body" id="historyBody"></div>
@@ -246,7 +243,7 @@ Paste job posting 3 here..."></textarea>
 <div class="side-col">
   <div class="surf-card">
     <div class="surf-header">
-      <span class="lens-art"></span><span class="surf-title">Surf</span>
+      <span class="surf-dot"></span><span class="surf-title">Surf</span>
       <span class="surf-count" id="surfCount">0 concepts</span>
     </div>
     <div class="surf-graph-wrap" id="surfGraphWrap">
@@ -781,7 +778,7 @@ function renderResults(timestamp) {
     passingEl.innerHTML = '';
     if (passing.length > 0) {
       const h = document.createElement('div');
-      h.style.cssText = 'font-size:13px;font-weight:500;color:#34d399;margin-bottom:10px;';
+      h.style.cssText = 'font-size:13px;font-weight:500;color:#047857;margin-bottom:10px;';
       h.textContent = `${passing.length} roles worth pursuing`;
       passingEl.appendChild(h);
       passing.forEach(r => {
@@ -794,13 +791,13 @@ function renderResults(timestamp) {
     failingEl.innerHTML = '';
     if (failing.length > 0 || applied.length > 0) {
       const h = document.createElement('div');
-      h.style.cssText = 'font-size:13px;font-weight:500;color:#8b8d98;margin-bottom:10px;';
+      h.style.cssText = 'font-size:13px;font-weight:500;color:#6b6b6b;margin-bottom:10px;';
       h.textContent = 'Filtered out';
       failingEl.appendChild(h);
       [...failing, ...applied].forEach(r => {
         const card = document.createElement('div');
         card.className = 'fail-card';
-        card.innerHTML = `<div><span style="font-size:13px;font-weight:500">${escapeHtml(r.role_title || 'Unknown role')}</span> <span style="font-size:12px;color:#555868">— ${escapeHtml(r.company || '')}</span></div><div class="fail-reason">${r.already_applied ? 'Already applied' : escapeHtml(r.rejection_reason || 'Score: ' + Math.round(r.overall||0))}</div>`;
+        card.innerHTML = `<div><span style="font-size:13px;font-weight:500">${escapeHtml(r.role_title || 'Unknown role')}</span> <span style="font-size:12px;color:#9a9a9a">— ${escapeHtml(r.company || '')}</span></div><div class="fail-reason">${r.already_applied ? 'Already applied' : escapeHtml(r.rejection_reason || 'Score: ' + Math.round(r.overall||0))}</div>`;
         failingEl.appendChild(card);
       });
     }
@@ -841,7 +838,7 @@ function renderHistory() {
     const badgeClass = isPassing ? 'score-pass' : isCred ? 'score-cred' : 'score-fail';
     const borderClass = isPassing ? ' pass-border' : isCred ? ' cred-border' : '';
     const time = r._timestamp ? new Date(r._timestamp).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
-    const masterBadge = r._isMaster ? ' <span class="notion-badge" style="background:rgba(59,130,246,0.12);color:#60a5fa;font-size:10px">master</span>' : '';
+    const masterBadge = r._isMaster ? ' <span class="notion-badge" style="background:#f3f0ff;color:#7c3aed;font-size:10px">master</span>' : '';
 
     const item = document.createElement('div');
     item.className = 'history-item' + borderClass;
@@ -890,7 +887,7 @@ function buildJobCard(r, type, globalIndex) {
       <div class="job-title-row">
         <span class="job-title">${escapeHtml(r.role_title || 'Unknown role')}</span>
         <span class="job-company">${escapeHtml(r.company || '')}${r.location ? ' — ' + escapeHtml(r.location) : ''}</span>
-        ${r._isMaster ? `<span class="notion-badge" style="background:rgba(59,130,246,0.12);color:#60a5fa">Synthesized from ${(r._versions||[]).length + 1} versions</span>` : ''}
+        ${r._isMaster ? `<span class="notion-badge" style="background:#f3f0ff;color:#7c3aed">Synthesized from ${(r._versions||[]).length + 1} versions</span>` : ''}
       </div>
       <div style="display:flex;align-items:center;gap:8px">
         <span class="score-badge ${badgeClass}">${badgeText}</span>
@@ -923,22 +920,22 @@ function buildJobCard(r, type, globalIndex) {
 
 function buildScoringTab(r) {
   const score = Math.round(r.overall || 0);
-  let html = `<div class="overall-row"><span class="overall-big">${score}</span><span style="font-size:14px;color:#8b8d98">/ 100 overall match</span></div>`;
+  let html = `<div class="overall-row"><span class="overall-big">${score}</span><span style="font-size:14px;color:#6b6b6b">/ 100 overall match</span></div>`;
   (r.dimensions || []).forEach(d => {
     const s = Math.round(d.score || 0);
-    const color = s >= 70 ? '#34d399' : s >= 50 ? '#fbbf24' : '#f87171';
+    const color = s >= 70 ? '#047857' : s >= 50 ? '#92400e' : '#b91c1c';
     html += `<div class="dim-block"><div class="dim-header"><span class="dim-name">${d.name} <span class="dim-weight">(${d.weight}%)</span></span><span class="dim-score-num" style="color:${color}">${s}</span></div><div class="bar-bg"><div class="bar-fill" style="width:${s}%;background:${color}"></div></div><div class="dim-reasoning">${d.reasoning || ''}</div></div>`;
   });
   return html;
 }
 
 function buildResumeTab(r) {
-  if (!r.resume) return '<p style="font-size:13px;color:#555868;font-style:italic">No resume generated for this role.</p>';
+  if (!r.resume) return '<p style="font-size:13px;color:#9a9a9a;font-style:italic">No resume generated for this role.</p>';
   return `<button class="copy-btn" onclick="copyText(this, \`${escapeForAttr(r.resume)}\`)">Copy</button><div class="resume-box">${escapeHtml(r.resume)}</div>`;
 }
 
 function buildFieldsTab(r) {
-  if (!r.manual_fields) return '<p style="font-size:13px;color:#555868;font-style:italic">No manual fields generated.</p>';
+  if (!r.manual_fields) return '<p style="font-size:13px;color:#9a9a9a;font-style:italic">No manual fields generated.</p>';
   const fields = [
     { key: 'tiberi', label: 'Tiberi Group, Brandeis University' },
     { key: 'candela', label: 'Candela Medical' },
@@ -952,37 +949,37 @@ function buildFieldsTab(r) {
 }
 
 function buildPhysicsTab(r) {
-  if (!r.physics_connection) return '<p style="font-size:13px;color:#555868;font-style:italic">No physics connection map generated.</p>';
+  if (!r.physics_connection) return '<p style="font-size:13px;color:#9a9a9a;font-style:italic">No physics connection map generated.</p>';
   return `<div class="physics-map">${escapeHtml(r.physics_connection).replace(/\n\n/g, '</div><div class="physics-map" style="margin-top:10px">')}</div>`;
 }
 
 function buildCommTab(r) {
-  if (!r.communication_map) return '<p style="font-size:13px;color:#555868;font-style:italic">No communication map generated.</p>';
+  if (!r.communication_map) return '<p style="font-size:13px;color:#9a9a9a;font-style:italic">No communication map generated.</p>';
   return `<div class="comm-map">${escapeHtml(r.communication_map).replace(/\n\n/g, '</div><div class="comm-map" style="margin-top:10px">')}</div>`;
 }
 
 function buildTailoringTab(r) {
   const d = r.tailoring_diff;
-  if (!d && !r.team_context) return '<p style="font-size:13px;color:#555868;font-style:italic">No tailoring diff generated.</p>';
+  if (!d && !r.team_context) return '<p style="font-size:13px;color:#9a9a9a;font-style:italic">No tailoring diff generated.</p>';
   let html = '';
 
   // Team context
   const tc = r.team_context;
   if (tc) {
-    html += '<div style="margin-bottom:14px;padding:14px;border-radius:8px;background:rgba(124,58,237,0.08);border-left:3px solid #7c3aed">';
-    html += '<div style="font-size:11px;font-weight:500;color:#a78bfa;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Team context</div>';
+    html += '<div style="margin-bottom:14px;padding:14px;border-radius:8px;background:#f3f0ff;border-left:3px solid #7c3aed">';
+    html += '<div style="font-size:11px;font-weight:500;color:#7c3aed;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Team context</div>';
     if (tc.team_name) html += `<div style="font-size:13px;font-weight:500;margin-bottom:4px">${escapeHtml(tc.team_name)}</div>`;
-    if (tc.what_they_build) html += `<div style="font-size:12px;color:#8b8d98;margin-bottom:4px">${escapeHtml(tc.what_they_build)}</div>`;
-    if (tc.core_challenge) html += `<div style="font-size:12px;color:#8b8d98;margin-bottom:4px"><strong>Core challenge:</strong> ${escapeHtml(tc.core_challenge)}</div>`;
-    if (tc.vishnu_connection) html += `<div style="font-size:12px;color:#8b8d98"><strong>Vishnu's connection:</strong> ${escapeHtml(tc.vishnu_connection)}</div>`;
+    if (tc.what_they_build) html += `<div style="font-size:12px;color:#6b6b6b;margin-bottom:4px">${escapeHtml(tc.what_they_build)}</div>`;
+    if (tc.core_challenge) html += `<div style="font-size:12px;color:#6b6b6b;margin-bottom:4px"><strong>Core challenge:</strong> ${escapeHtml(tc.core_challenge)}</div>`;
+    if (tc.vishnu_connection) html += `<div style="font-size:12px;color:#6b6b6b"><strong>Vishnu's connection:</strong> ${escapeHtml(tc.vishnu_connection)}</div>`;
     html += '</div>';
   }
 
-  if (!d) return html || '<p style="font-size:13px;color:#555868;font-style:italic">No tailoring diff generated.</p>';
+  if (!d) return html || '<p style="font-size:13px;color:#9a9a9a;font-style:italic">No tailoring diff generated.</p>';
 
   // Overall strategy
   if (d.overall_strategy) {
-    html += `<div style="font-size:13px;color:#e8e6e3;line-height:1.7;background:rgba(16,185,129,0.08);padding:14px;border-radius:8px;border-left:3px solid #10b981;margin-bottom:14px"><strong>Strategy:</strong> ${escapeHtml(d.overall_strategy)}</div>`;
+    html += `<div style="font-size:13px;color:#1a1a1a;line-height:1.7;background:#ecfdf5;padding:14px;border-radius:8px;border-left:3px solid #10b981;margin-bottom:14px"><strong>Strategy:</strong> ${escapeHtml(d.overall_strategy)}</div>`;
   }
 
   // Section header and Candela variant
@@ -999,10 +996,10 @@ function buildTailoringTab(r) {
   if (d.bullets_modified && d.bullets_modified.length > 0) {
     html += '<div style="font-size:11px;font-weight:500;color:#999;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Modified bullets</div>';
     d.bullets_modified.forEach(b => {
-      html += `<div style="margin-bottom:12px;padding:10px 12px;border-radius:8px;background:rgba(245,158,11,0.08);border-left:3px solid #f59e0b">`;
-      html += `<div style="font-size:11px;color:#fbbf24;font-weight:500;margin-bottom:4px">What changed: ${escapeHtml(b.what_changed)}</div>`;
-      html += `<div style="font-size:11px;color:#555868;margin-bottom:4px"><strong>Original:</strong> ${escapeHtml((b.original || '').substring(0, 120))}...</div>`;
-      html += `<div style="font-size:11px;color:#8b8d98"><strong>Tailored:</strong> ${escapeHtml((b.tailored || '').substring(0, 120))}...</div>`;
+      html += `<div style="margin-bottom:12px;padding:10px 12px;border-radius:8px;background:#fffbeb;border-left:3px solid #d97706">`;
+      html += `<div style="font-size:11px;color:#92400e;font-weight:500;margin-bottom:4px">What changed: ${escapeHtml(b.what_changed)}</div>`;
+      html += `<div style="font-size:11px;color:#9a9a9a;margin-bottom:4px"><strong>Original:</strong> ${escapeHtml((b.original || '').substring(0, 120))}...</div>`;
+      html += `<div style="font-size:11px;color:#6b6b6b"><strong>Tailored:</strong> ${escapeHtml((b.tailored || '').substring(0, 120))}...</div>`;
       html += '</div>';
     });
   }
@@ -1010,7 +1007,7 @@ function buildTailoringTab(r) {
   // Bullets kept unchanged
   if (d.bullets_kept_unchanged && d.bullets_kept_unchanged.length > 0) {
     html += '<div style="font-size:11px;font-weight:500;color:#999;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;margin-top:12px">Kept as-is</div>';
-    html += '<div style="font-size:12px;color:#666;line-height:1.6;padding:8px 12px;background:rgba(18,20,28,0.8);border-radius:6px;border:1px solid #2a2d3a">';
+    html += '<div style="font-size:12px;color:#666;line-height:1.6;padding:8px 12px;background:#faf9f6;border-radius:6px;border:1px solid #e5e2db">';
     d.bullets_kept_unchanged.forEach(b => { html += `<div style="margin-bottom:4px">- ${escapeHtml(b)}</div>`; });
     html += '</div>';
   }
@@ -1019,15 +1016,15 @@ function buildTailoringTab(r) {
   if (d.bullets_omitted && d.bullets_omitted.length > 0) {
     html += '<div style="font-size:11px;font-weight:500;color:#999;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;margin-top:12px">Omitted</div>';
     d.bullets_omitted.forEach(b => {
-      html += `<div style="font-size:12px;color:#555868;margin-bottom:4px;padding:6px 12px;background:rgba(239,68,68,0.08);border-radius:6px;border-left:3px solid #ef4444"><strong>${escapeHtml(b.bullet_summary)}:</strong> ${escapeHtml(b.reason)}</div>`;
+      html += `<div style="font-size:12px;color:#9a9a9a;margin-bottom:4px;padding:6px 12px;background:#fef2f2;border-radius:6px;border-left:3px solid #dc2626"><strong>${escapeHtml(b.bullet_summary)}:</strong> ${escapeHtml(b.reason)}</div>`;
     });
   }
 
-  return html || '<p style="font-size:13px;color:#555868;font-style:italic">No tailoring diff data.</p>';
+  return html || '<p style="font-size:13px;color:#9a9a9a;font-style:italic">No tailoring diff data.</p>';
 }
 
 function buildVersionsTab(r) {
-  if (!r._versions || r._versions.length === 0) return '<p style="font-size:13px;color:#555868;font-style:italic">No previous versions.</p>';
+  if (!r._versions || r._versions.length === 0) return '<p style="font-size:13px;color:#9a9a9a;font-style:italic">No previous versions.</p>';
   let html = '';
   if (r._isMaster) {
     html += '<div style="font-size:12px;color:#2563eb;background:#e1f0ff;padding:8px 12px;border-radius:6px;margin-bottom:12px">This is a synthesized master version. The resume, physics connection, and defensibility above are the best elements cherry-picked from all versions below.</div>';
@@ -1036,13 +1033,13 @@ function buildVersionsTab(r) {
     const score = Math.round(v.overall || 0);
     const time = v._timestamp ? new Date(v._timestamp).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Unknown time';
     const color = v.pass ? '#0a6040' : '#8b2020';
-    html += `<div style="margin-bottom:12px;padding:12px;border:1px solid #2a2d3a;border-radius:8px">`;
-    html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px;font-weight:500">Version ${i + 1}</span><span style="font-size:12px;color:#555868">${time}</span><span style="font-size:12px;font-weight:500;color:${color}">${score}/100</span></div>`;
+    html += `<div style="margin-bottom:12px;padding:12px;border:1px solid #e5e2db;border-radius:8px">`;
+    html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px;font-weight:500">Version ${i + 1}</span><span style="font-size:12px;color:#9a9a9a">${time}</span><span style="font-size:12px;font-weight:500;color:${color}">${score}/100</span></div>`;
     if (v.resume) {
-      html += `<details style="margin-bottom:6px"><summary style="font-size:11px;color:#8b8d98;cursor:pointer">Resume</summary><div class="resume-box" style="max-height:200px;margin-top:6px">${escapeHtml(v.resume)}</div></details>`;
+      html += `<details style="margin-bottom:6px"><summary style="font-size:11px;color:#6b6b6b;cursor:pointer">Resume</summary><div class="resume-box" style="max-height:200px;margin-top:6px">${escapeHtml(v.resume)}</div></details>`;
     }
     if (v.physics_connection) {
-      html += `<details><summary style="font-size:11px;color:#8b8d98;cursor:pointer">Physics connection</summary><div style="font-size:12px;color:#8b8d98;line-height:1.6;margin-top:6px;padding:8px;background:rgba(18,20,28,0.8);border-radius:6px;border:1px solid #2a2d3a">${escapeHtml(v.physics_connection)}</div></details>`;
+      html += `<details><summary style="font-size:11px;color:#6b6b6b;cursor:pointer">Physics connection</summary><div style="font-size:12px;color:#6b6b6b;line-height:1.6;margin-top:6px;padding:8px;background:#faf9f6;border-radius:6px;border:1px solid #e5e2db">${escapeHtml(v.physics_connection)}</div></details>`;
     }
     html += '</div>';
   });
@@ -1050,7 +1047,7 @@ function buildVersionsTab(r) {
 }
 
 function buildDefenseTab(r) {
-  if (!r.defensibility || r.defensibility.length === 0) return '<p style="font-size:13px;color:#555868;font-style:italic">No defensibility assessment generated.</p>';
+  if (!r.defensibility || r.defensibility.length === 0) return '<p style="font-size:13px;color:#9a9a9a;font-style:italic">No defensibility assessment generated.</p>';
   return r.defensibility.map(d => {
     const tierClass = d.tier === 'READY NOW' ? 'def-low' : d.tier === 'PREPARATION PATH' ? 'def-med' : 'def-high';
     const tierLabel = d.tier === 'READY NOW' ? 'Ready now — defend cold' : d.tier === 'PREPARATION PATH' ? 'Preparation path exists' : 'Genuine gap — reframe needed';
@@ -1262,7 +1259,7 @@ function renderGraph() {
   let html = '';
   // Edges
   graphEdges.forEach(([a, b]) => {
-    html += `<line x1="${graphNodes[a].x}" y1="${graphNodes[a].y}" x2="${graphNodes[b].x}" y2="${graphNodes[b].y}" stroke="rgba(139,141,152,0.12)" stroke-width="1"/>`;
+    html += `<line x1="${graphNodes[a].x}" y1="${graphNodes[a].y}" x2="${graphNodes[b].x}" y2="${graphNodes[b].y}" stroke="rgba(0,0,0,0.08)" stroke-width="1"/>`;
   });
   // Nodes
   graphNodes.forEach((n, i) => {
