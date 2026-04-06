@@ -248,6 +248,15 @@ Return ONLY valid JSON, no markdown fences, no preamble:
 
 const SYSTEM_PROMPT = `You are Vishnu Murthy's personal career intelligence agent. This posting has already passed the 70% scoring threshold. Generate the complete application package using the scoring data and knowledge base provided.
 
+=== TEAM CONTEXT ANALYSIS (DO THIS FIRST) ===
+Before tailoring the resume, identify the team and their core problem:
+1. What team, division, or group is this role in? (e.g. "Optical Components Center" or "LS-SWIFT Laser Scanning division")
+2. What does that team actually build, maintain, or solve? (e.g. "thin film coatings for defense optics" or "patterned wafer defect inspection tools")
+3. What is the team's core technical challenge that they hire for? (e.g. "maximizing defect detection sensitivity at shrinking nodes" or "process control for high-volume coating deposition")
+4. How does Vishnu's specific work connect to that team's problems -- not just the job description keywords, but the underlying engineering challenges the team faces daily?
+
+Use this team context to drive ALL tailoring decisions: which bullets to emphasize, which framing to use, which physics connections to highlight. The resume should read as if Vishnu understands what this team does and has been preparing for their specific problems.
+
 === RESUME RULES (NON-NEGOTIABLE) ===
 1. One page maximum
 2. No em dashes — use commas or semicolons
@@ -342,6 +351,12 @@ Return ONLY valid JSON, no markdown fences, no preamble:
     "candela": "<role-specific prose entry for Candela Medical Workday field, 3-5 sentences, first person>",
     "baskaran": "<role-specific prose entry for Baskaran Group Workday field, 2-3 sentences, first person>",
     "yevick": "<role-specific prose entry for Yevick Laboratory Workday field, 2 sentences, first person>"
+  },
+  "team_context": {
+    "team_name": "<team, division, or group name identified from the posting>",
+    "what_they_build": "<1-2 sentences on what this team actually builds, maintains, or solves>",
+    "core_challenge": "<the specific technical challenge this team hires for>",
+    "vishnu_connection": "<how Vishnu's specific work connects to this team's core problems>"
   },
   "physics_connection": "<2-3 paragraph explanation of the genuine underlying physics or domain connection between Vishnu's Hopkins/Candela work and the core technical problems this role solves every day. Be specific about which physics concepts transfer and why. This should help Vishnu articulate his fit in a cover letter or opening interview answer. If connection is weak, say so honestly.>",
   "communication_map": "<2 paragraph explanation of how this specific role develops corporate communication skills. What meetings would Vishnu be in? What types of stakeholders? What documentation? What soft skill gaps does this role specifically address? If communication development value is low, note that honestly.>",
@@ -680,8 +695,22 @@ function buildCommTab(r) {
 
 function buildTailoringTab(r) {
   const d = r.tailoring_diff;
-  if (!d) return '<p style="font-size:13px;color:#999;font-style:italic">No tailoring diff generated.</p>';
+  if (!d && !r.team_context) return '<p style="font-size:13px;color:#999;font-style:italic">No tailoring diff generated.</p>';
   let html = '';
+
+  // Team context
+  const tc = r.team_context;
+  if (tc) {
+    html += '<div style="margin-bottom:14px;padding:14px;border-radius:8px;background:#f5f0ff;border-left:3px solid #8a4ad4">';
+    html += '<div style="font-size:11px;font-weight:500;color:#8a4ad4;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Team context</div>';
+    if (tc.team_name) html += `<div style="font-size:13px;font-weight:500;margin-bottom:4px">${escapeHtml(tc.team_name)}</div>`;
+    if (tc.what_they_build) html += `<div style="font-size:12px;color:#444;margin-bottom:4px">${escapeHtml(tc.what_they_build)}</div>`;
+    if (tc.core_challenge) html += `<div style="font-size:12px;color:#444;margin-bottom:4px"><strong>Core challenge:</strong> ${escapeHtml(tc.core_challenge)}</div>`;
+    if (tc.vishnu_connection) html += `<div style="font-size:12px;color:#444"><strong>Vishnu's connection:</strong> ${escapeHtml(tc.vishnu_connection)}</div>`;
+    html += '</div>';
+  }
+
+  if (!d) return html || '<p style="font-size:13px;color:#999;font-style:italic">No tailoring diff generated.</p>';
 
   // Overall strategy
   if (d.overall_strategy) {
