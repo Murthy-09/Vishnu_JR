@@ -5,123 +5,149 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Vishnu JR — Batch Job Agent</title>
 <style>
+:root {
+  --bg: #0f1117; --bg-card: #181b24; --bg-card-hover: #1e2230; --bg-input: #12141c;
+  --border: #2a2d3a; --border-subtle: #1f222e;
+  --text: #e8e6e3; --text-dim: #8b8d98; --text-muted: #555868;
+  --violet: #7c3aed; --blue: #3b82f6; --cyan: #06b6d4; --green: #10b981;
+  --yellow: #f59e0b; --orange: #f97316; --red: #ef4444;
+  --violet-hover: #6d28d9;
+  --spectrum: linear-gradient(90deg, #7c3aed, #3b82f6, #06b6d4, #10b981, #f59e0b, #f97316, #ef4444);
+}
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f2; color: #1a1a1a; min-height: 100vh; }
+body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; background-image: radial-gradient(rgba(124,58,237,0.04) 1px, transparent 1px), radial-gradient(rgba(59,130,246,0.03) 1px, transparent 1px); background-size: 32px 32px, 48px 48px; background-position: 0 0, 16px 16px; }
 .container { max-width: 920px; margin: 0 auto; padding: 2rem 1.5rem; }
-h1 { font-size: 22px; font-weight: 500; margin-bottom: 4px; }
-.subtitle { font-size: 13px; color: #666; margin-bottom: 2rem; line-height: 1.6; }
-.card { background: #fff; border: 0.5px solid #e0e0e0; border-radius: 12px; padding: 1.25rem; margin-bottom: 14px; }
-label { font-size: 13px; color: #555; display: block; margin-bottom: 6px; font-weight: 500; }
-textarea { width: 100%; padding: 10px 12px; font-size: 13px; font-family: inherit; border: 0.5px solid #ddd; border-radius: 8px; background: #fafafa; color: #1a1a1a; resize: vertical; line-height: 1.6; }
-textarea:focus { outline: none; border-color: #999; background: #fff; }
-#batchInput { min-height: 280px; font-family: 'Courier New', monospace; font-size: 12px; }
+h1 { font-size: 24px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 4px; }
+h1::after { content: ''; display: block; height: 2px; width: 80px; margin-top: 8px; background: var(--spectrum); border-radius: 1px; }
+.subtitle { font-size: 13px; color: var(--text-dim); margin-bottom: 2rem; line-height: 1.7; }
+.card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 14px; transition: border-color 0.3s, box-shadow 0.3s; }
+.card:hover { border-color: rgba(124,58,237,0.3); box-shadow: 0 0 20px rgba(124,58,237,0.05); }
+label { font-size: 13px; color: var(--text-dim); display: block; margin-bottom: 6px; font-weight: 500; }
+textarea { width: 100%; padding: 10px 12px; font-size: 13px; font-family: inherit; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-input); color: var(--text); resize: vertical; line-height: 1.6; }
+textarea:focus { outline: none; border-color: rgba(124,58,237,0.5); box-shadow: 0 0 0 3px rgba(124,58,237,0.08); background: var(--bg-card); }
+#batchInput { min-height: 280px; font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', 'Courier New', monospace; font-size: 12px; }
 .btn-row { display: flex; gap: 8px; margin-top: 12px; align-items: center; flex-wrap: wrap; }
-button { padding: 8px 18px; border: 0.5px solid #ccc; border-radius: 8px; background: #fff; color: #1a1a1a; cursor: pointer; font-size: 13px; font-family: inherit; transition: background 0.15s; }
-button:hover { background: #f0f0ee; }
-button.primary { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
-button.primary:hover { background: #333; }
-button.danger { background: #fff; color: #c0392b; border-color: #f0c0c0; }
-button.danger:hover { background: #fce8e8; }
+button { padding: 8px 18px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-card); color: var(--text-dim); cursor: pointer; font-size: 13px; font-family: inherit; transition: background 0.2s, border-color 0.2s, transform 0.1s, box-shadow 0.2s; }
+button:hover { background: var(--bg-card-hover); border-color: rgba(124,58,237,0.4); color: var(--text); }
+button:active { transform: scale(0.97); }
+button.primary { background: var(--violet); color: #fff; border-color: var(--violet); }
+button.primary:hover { background: var(--violet-hover); box-shadow: 0 0 16px rgba(124,58,237,0.3); }
+button.danger { background: var(--bg-card); color: var(--red); border-color: rgba(239,68,68,0.3); }
+button.danger:hover { background: rgba(239,68,68,0.08); }
 button:disabled { opacity: 0.4; cursor: not-allowed; }
-.spinner { display: inline-block; width: 15px; height: 15px; border: 2px solid #ddd; border-top-color: #666; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; }
+.spinner { display: inline-block; width: 15px; height: 15px; border: 2px solid var(--border); border-top-color: var(--violet); border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.status-msg { font-size: 13px; color: #666; }
-.section-label { font-size: 11px; font-weight: 500; color: #999; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+.status-msg { font-size: 13px; color: var(--text-dim); }
+.section-label { font-size: 10px; font-weight: 600; color: var(--violet); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
 .api-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
-.api-input { flex: 1; padding: 8px 12px; font-size: 13px; font-family: inherit; border: 0.5px solid #ddd; border-radius: 8px; background: #fafafa; color: #1a1a1a; }
-.api-input:focus { outline: none; border-color: #999; }
-.kb-status { font-size: 12px; color: #999; }
-.kb-status.loaded { color: #0a6040; }
-.kb-status.error { color: #8b2020; }
-.notion-badge { display: inline-block; font-size: 11px; padding: 2px 8px; background: #f0f0ee; border-radius: 4px; color: #666; margin-left: 8px; }
-.progress-bar-bg { height: 4px; background: #eee; border-radius: 2px; margin: 12px 0; overflow: hidden; }
-.progress-bar-fill { height: 100%; background: #1a1a1a; border-radius: 2px; transition: width 0.3s ease; }
-.progress-label { font-size: 12px; color: #666; margin-bottom: 4px; }
+.api-input { flex: 1; padding: 8px 12px; font-size: 13px; font-family: inherit; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-input); color: var(--text); }
+.api-input:focus { outline: none; border-color: rgba(124,58,237,0.5); }
+.kb-status { font-size: 12px; color: var(--text-muted); }
+.kb-status.loaded { color: var(--green); }
+.kb-status.error { color: var(--red); }
+.notion-badge { display: inline-block; font-size: 11px; padding: 2px 8px; background: rgba(124,58,237,0.12); border-radius: 4px; color: #a78bfa; margin-left: 8px; }
+.progress-bar-bg { height: 4px; background: var(--border-subtle); border-radius: 2px; margin: 12px 0; overflow: hidden; }
+.progress-bar-fill { height: 100%; background: var(--spectrum); border-radius: 2px; transition: width 0.4s cubic-bezier(0.4,0,0.2,1); }
+.progress-label { font-size: 12px; color: var(--text-dim); margin-bottom: 4px; }
 .results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .results-title { font-size: 16px; font-weight: 500; }
-.results-summary { font-size: 13px; color: #666; }
-.job-card { background: #fff; border: 0.5px solid #e0e0e0; border-radius: 12px; margin-bottom: 12px; overflow: hidden; }
+.results-summary { font-size: 13px; color: var(--text-dim); }
+.job-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 12px; overflow: hidden; transition: border-color 0.3s; }
+.job-card:hover { border-color: rgba(124,58,237,0.25); }
+.job-card.passing-card::before { content: ''; display: block; height: 2px; background: var(--spectrum); }
 .job-card-header { padding: 1rem 1.25rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-.job-card-header:hover { background: #fafafa; }
+.job-card-header:hover { background: var(--bg-card-hover); }
 .job-title-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .job-title { font-size: 14px; font-weight: 500; }
-.job-company { font-size: 13px; color: #666; }
-.score-badge { font-size: 13px; font-weight: 500; padding: 3px 10px; border-radius: 20px; }
-.score-pass { background: #e1f5ee; color: #0a6040; }
-.score-fail { background: #fce8e8; color: #8b2020; }
-.score-applied { background: #f0f0ee; color: #666; }
-.chevron { font-size: 12px; color: #999; transition: transform 0.2s; }
+.job-company { font-size: 13px; color: var(--text-dim); }
+.score-badge { font-size: 13px; font-weight: 500; padding: 3px 10px; border-radius: 20px; animation: scoreReveal 0.3s ease forwards; }
+@keyframes scoreReveal { 0% { transform: scale(0.8); opacity: 0; } 50% { transform: scale(1.05); } 100% { transform: scale(1); opacity: 1; } }
+.score-pass { background: rgba(16,185,129,0.15); color: #34d399; }
+.score-fail { background: rgba(239,68,68,0.15); color: #f87171; }
+.score-applied { background: rgba(139,141,152,0.15); color: var(--text-dim); }
+.score-cred { background: rgba(245,158,11,0.15); color: #fbbf24; }
+.chevron { font-size: 12px; color: var(--text-muted); transition: transform 0.25s ease; }
 .chevron.open { transform: rotate(180deg); }
-.job-card-body { display: none; border-top: 0.5px solid #f0f0f0; }
+.job-card-body { display: none; border-top: 1px solid var(--border-subtle); }
 .job-card-body.open { display: block; }
-.tabs { display: flex; gap: 6px; padding: 12px 1.25rem 0; border-bottom: 0.5px solid #f0f0f0; flex-wrap: wrap; }
-.tab { padding: 5px 12px; border: 0.5px solid #ddd; border-radius: 20px; font-size: 12px; cursor: pointer; background: #fff; color: #666; margin-bottom: 12px; }
-.tab.active { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+.tabs { display: flex; gap: 6px; padding: 12px 1.25rem 0; border-bottom: 1px solid var(--border-subtle); flex-wrap: wrap; }
+.tab { padding: 5px 12px; border: 1px solid var(--border); border-radius: 20px; font-size: 12px; cursor: pointer; background: var(--bg-card); color: var(--text-dim); margin-bottom: 12px; transition: all 0.2s; }
+.tab.active { background: var(--violet); color: #fff; border-color: var(--violet); }
+.tab:hover:not(.active) { border-color: rgba(124,58,237,0.4); color: var(--text); }
 .tab-content { padding: 1.25rem; display: none; }
 .tab-content.active { display: block; }
 .dim-block { margin-bottom: 12px; }
 .dim-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; }
-.dim-name { font-size: 12px; color: #444; }
-.dim-weight { font-size: 10px; color: #999; }
+.dim-name { font-size: 12px; color: var(--text-dim); }
+.dim-weight { font-size: 10px; color: var(--text-muted); }
 .dim-score-num { font-size: 12px; font-weight: 500; }
-.bar-bg { height: 4px; background: #eee; border-radius: 2px; overflow: hidden; margin-bottom: 3px; }
+.bar-bg { height: 4px; background: var(--border-subtle); border-radius: 2px; overflow: hidden; margin-bottom: 3px; }
 .bar-fill { height: 100%; border-radius: 2px; }
-.dim-reasoning { font-size: 11px; color: #777; line-height: 1.5; }
-.resume-box { font-size: 11px; font-family: 'Courier New', monospace; white-space: pre-wrap; background: #f8f8f6; padding: 14px; border-radius: 8px; line-height: 1.7; color: #1a1a1a; max-height: 580px; overflow-y: auto; border: 0.5px solid #e8e8e8; }
+.dim-block:nth-child(1) .bar-fill { background: var(--violet); }
+.dim-block:nth-child(2) .bar-fill { background: var(--blue); }
+.dim-block:nth-child(3) .bar-fill { background: var(--cyan); }
+.dim-block:nth-child(4) .bar-fill { background: var(--green); }
+.dim-block:nth-child(5) .bar-fill { background: var(--yellow); }
+.dim-block:nth-child(6) .bar-fill { background: var(--orange); }
+.dim-block:nth-child(7) .bar-fill { background: var(--red); }
+.dim-reasoning { font-size: 11px; color: var(--text-muted); line-height: 1.5; }
+.resume-box { font-size: 11px; font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', 'Courier New', monospace; white-space: pre-wrap; background: var(--bg-input); padding: 14px; border-radius: 8px; line-height: 1.7; color: var(--text); max-height: 580px; overflow-y: auto; border: 1px solid var(--border); }
 .field-entry { margin-bottom: 18px; }
-.field-role { font-size: 12px; font-weight: 500; color: #1a1a1a; margin-bottom: 4px; }
-.field-text { font-size: 12px; color: #444; line-height: 1.6; background: #f8f8f6; padding: 10px 12px; border-radius: 6px; border: 0.5px solid #e8e8e8; }
-.physics-map { font-size: 13px; color: #444; line-height: 1.7; background: #f0f5ff; padding: 14px; border-radius: 8px; border-left: 3px solid #4a80d4; }
-.comm-map { font-size: 13px; color: #444; line-height: 1.7; background: #f5f0ff; padding: 14px; border-radius: 8px; border-left: 3px solid #8a4ad4; }
+.field-role { font-size: 12px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+.field-text { font-size: 12px; color: var(--text-dim); line-height: 1.6; background: var(--bg-input); padding: 10px 12px; border-radius: 6px; border: 1px solid var(--border); }
+.physics-map { font-size: 13px; color: var(--text); line-height: 1.7; background: rgba(124,58,237,0.08); padding: 14px; border-radius: 8px; border-left: 3px solid var(--violet); }
+.comm-map { font-size: 13px; color: var(--text); line-height: 1.7; background: rgba(6,182,212,0.08); padding: 14px; border-radius: 8px; border-left: 3px solid var(--cyan); }
 .def-item { margin-bottom: 12px; padding: 10px 12px; border-radius: 8px; }
-.def-low { background: #e1f5ee; border-left: 3px solid #1a9e6e; }
-.def-med { background: #fef9e7; border-left: 3px solid #d4880a; }
-.def-high { background: #fce8e8; border-left: 3px solid #c0392b; }
-.def-bullet { font-size: 12px; font-weight: 500; color: #1a1a1a; margin-bottom: 4px; }
+.def-low { background: rgba(16,185,129,0.08); border-left: 3px solid var(--green); }
+.def-med { background: rgba(245,158,11,0.08); border-left: 3px solid var(--yellow); }
+.def-high { background: rgba(239,68,68,0.08); border-left: 3px solid var(--red); }
+.def-bullet { font-size: 12px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
 .def-risk { font-size: 11px; font-weight: 500; margin-bottom: 3px; }
-.def-low .def-risk { color: #0a6040; }
-.def-med .def-risk { color: #8b5e0a; }
-.def-high .def-risk { color: #8b2020; }
-.def-brief { font-size: 11px; color: #555; line-height: 1.5; }
+.def-low .def-risk { color: #34d399; }
+.def-med .def-risk { color: #fbbf24; }
+.def-high .def-risk { color: #f87171; }
+.def-brief { font-size: 11px; color: var(--text-dim); line-height: 1.5; }
 .copy-btn { font-size: 11px; padding: 3px 8px; float: right; margin-bottom: 6px; }
-.overall-big { font-size: 36px; font-weight: 500; }
+.overall-big { font-size: 36px; font-weight: 600; background: var(--spectrum); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
 .overall-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 14px; }
 #results-section { display: none; }
-.processing-card { background: #fff; border: 0.5px solid #e0e0e0; border-radius: 12px; padding: 1.25rem; margin-bottom: 14px; }
-.fail-card { background: #fff; border: 0.5px solid #f0d0d0; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
-.fail-reason { font-size: 12px; color: #888; }
+.processing-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 14px; }
+.fail-card { background: var(--bg-card); border: 1px solid rgba(239,68,68,0.2); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+.fail-reason { font-size: 12px; color: var(--text-muted); }
 .sync-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-left: 6px; vertical-align: middle; }
-.sync-dot.pending { background: #ccc; animation: pulse 1s ease-in-out infinite; }
-.sync-dot.ok { background: #1a9e6e; }
-.sync-dot.fail { background: #c0392b; }
+.sync-dot.pending { background: var(--text-muted); animation: pulse 1s ease-in-out infinite; }
+.sync-dot.ok { background: var(--green); }
+.sync-dot.fail { background: var(--red); }
 @keyframes pulse { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
 #history-section { margin-top: 14px; }
-.history-card { background: #fff; border: 0.5px solid #e0e0e0; border-radius: 12px; overflow: hidden; }
+.history-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
 .history-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 1.25rem; }
 .history-header-left { display: flex; align-items: center; gap: 8px; }
-.history-title { font-size: 13px; font-weight: 500; color: #1a1a1a; }
-.history-count { font-size: 12px; color: #999; }
-.history-toggle-btn { font-size: 12px; padding: 4px 10px; cursor: pointer; border: 0.5px solid #ddd; border-radius: 6px; background: #fff; color: #666; }
-.history-toggle-btn:hover { background: #f0f0ee; }
+.history-title { font-size: 13px; font-weight: 500; color: var(--text); }
+.history-count { font-size: 12px; color: var(--text-muted); }
+.history-toggle-btn { font-size: 12px; padding: 4px 10px; cursor: pointer; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-card); color: var(--text-dim); transition: all 0.2s; }
+.history-toggle-btn:hover { background: var(--bg-card-hover); border-color: rgba(124,58,237,0.4); }
 .history-body { display: none; }
 .history-body.open { display: block; }
-.history-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 1.25rem; border-top: 0.5px solid #f0f0f0; font-size: 13px; cursor: pointer; transition: background 0.1s; }
-.history-item:hover { background: #fafaf8; }
-.history-item.pass-border { border-left: 3px solid #1a9e6e; }
-.history-item.cred-border { border-left: 3px solid #d4880a; }
+.history-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 1.25rem; border-top: 1px solid var(--border-subtle); font-size: 13px; cursor: pointer; transition: background 0.1s; }
+.history-item:hover { background: var(--bg-card-hover); }
+.history-item.pass-border { border-left: 3px solid var(--green); }
+.history-item.cred-border { border-left: 3px solid var(--yellow); }
 .history-item-left { display: flex; flex-direction: column; gap: 2px; }
-.history-item-title { font-size: 13px; font-weight: 500; color: #1a1a1a; }
-.history-item-company { font-size: 12px; color: #888; }
+.history-item-title { font-size: 13px; font-weight: 500; color: var(--text); }
+.history-item-company { font-size: 12px; color: var(--text-muted); }
 .history-item-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-.history-item-meta { font-size: 11px; color: #aaa; }
-.score-cred { background: #fef9e7; color: #8b5e0a; }
-.batch-label { font-size: 11px; font-weight: 500; color: #999; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
+.history-item-meta { font-size: 11px; color: var(--text-muted); }
+.batch-label { font-size: 11px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
+/* Pixel art: optical prism */
+.prism-art { display: inline-block; width: 1px; height: 1px; margin-right: 16px; margin-bottom: -8px; vertical-align: middle; transform: scale(2.5); transform-origin: top left;
+  box-shadow: -8px 7px 0 var(--text), -7px 7px 0 var(--text), -6px 7px 0 var(--text), -5px 7px 0 var(--text), -4px 7px 0 var(--text), 0px 0px 0 var(--text-dim), -1px 2px 0 var(--text-dim), 1px 2px 0 var(--text-dim), -2px 4px 0 var(--text-dim), 2px 4px 0 var(--text-dim), -3px 6px 0 var(--text-dim), -2px 6px 0 var(--text-muted), -1px 6px 0 var(--text-muted), 0px 6px 0 var(--text-muted), 1px 6px 0 var(--text-muted), 2px 6px 0 var(--text-muted), 3px 6px 0 var(--text-dim), -3px 8px 0 var(--text-dim), 3px 8px 0 var(--text-dim), -4px 10px 0 var(--text-dim), 4px 10px 0 var(--text-dim), -5px 12px 0 var(--text-dim), -4px 12px 0 var(--text-dim), -3px 12px 0 var(--text-dim), -2px 12px 0 var(--text-dim), -1px 12px 0 var(--text-dim), 0px 12px 0 var(--text-dim), 1px 12px 0 var(--text-dim), 2px 12px 0 var(--text-dim), 3px 12px 0 var(--text-dim), 4px 12px 0 var(--text-dim), 5px 12px 0 var(--text-dim), 5px 4px 0 var(--violet), 6px 3px 0 var(--violet), 7px 2px 0 var(--violet), 5px 5px 0 var(--blue), 6px 5px 0 var(--blue), 7px 4px 0 var(--blue), 5px 6px 0 var(--cyan), 6px 6px 0 var(--cyan), 7px 6px 0 var(--cyan), 5px 7px 0 var(--green), 6px 7px 0 var(--green), 7px 7px 0 var(--green), 5px 8px 0 var(--yellow), 6px 8px 0 var(--yellow), 7px 9px 0 var(--yellow), 5px 9px 0 var(--orange), 6px 10px 0 var(--orange), 7px 11px 0 var(--orange), 5px 10px 0 var(--red), 6px 11px 0 var(--red), 7px 12px 0 var(--red); }
 </style>
 </head>
 <body>
 <div class="container">
 
-<h1>Vishnu JR <span class="notion-badge">Batch Mode</span></h1>
+<h1><span class="prism-art"></span>Vishnu JR <span class="notion-badge">Batch Mode</span></h1>
 <p class="subtitle">Paste up to 20 job postings separated by --- on its own line. The agent processes them overnight using Claude Opus, scores each across 7 dimensions, and generates complete application packages for roles that pass 70%. Results persist to Notion and survive browser close.</p>
 
 
@@ -156,7 +182,7 @@ Paste job posting 3 here..."></textarea>
   <div class="processing-card">
     <div class="progress-label" id="progressLabel">Processing...</div>
     <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressBar" style="width:0%"></div></div>
-    <div style="font-size:12px;color:#999;margin-top:6px" id="progressDetail"></div>
+    <div style="font-size:12px;color:#555868;margin-top:6px" id="progressDetail"></div>
   </div>
 </div>
 
@@ -166,7 +192,7 @@ Paste job posting 3 here..."></textarea>
       <div class="results-title">Results</div>
       <div class="results-summary" id="resultsSummary"></div>
     </div>
-    <div style="font-size:12px;color:#999" id="resultsTimestamp"></div>
+    <div style="font-size:12px;color:#555868" id="resultsTimestamp"></div>
   </div>
   <div id="passingResults"></div>
   <div id="failingResults" style="margin-top:16px"></div>
@@ -702,7 +728,7 @@ function renderResults(timestamp) {
     passingEl.innerHTML = '';
     if (passing.length > 0) {
       const h = document.createElement('div');
-      h.style.cssText = 'font-size:13px;font-weight:500;color:#0a6040;margin-bottom:10px;';
+      h.style.cssText = 'font-size:13px;font-weight:500;color:#34d399;margin-bottom:10px;';
       h.textContent = `${passing.length} roles worth pursuing`;
       passingEl.appendChild(h);
       passing.forEach(r => {
@@ -715,13 +741,13 @@ function renderResults(timestamp) {
     failingEl.innerHTML = '';
     if (failing.length > 0 || applied.length > 0) {
       const h = document.createElement('div');
-      h.style.cssText = 'font-size:13px;font-weight:500;color:#888;margin-bottom:10px;';
+      h.style.cssText = 'font-size:13px;font-weight:500;color:#8b8d98;margin-bottom:10px;';
       h.textContent = 'Filtered out';
       failingEl.appendChild(h);
       [...failing, ...applied].forEach(r => {
         const card = document.createElement('div');
         card.className = 'fail-card';
-        card.innerHTML = `<div><span style="font-size:13px;font-weight:500">${escapeHtml(r.role_title || 'Unknown role')}</span> <span style="font-size:12px;color:#888">— ${escapeHtml(r.company || '')}</span></div><div class="fail-reason">${r.already_applied ? 'Already applied' : escapeHtml(r.rejection_reason || 'Score: ' + Math.round(r.overall||0))}</div>`;
+        card.innerHTML = `<div><span style="font-size:13px;font-weight:500">${escapeHtml(r.role_title || 'Unknown role')}</span> <span style="font-size:12px;color:#555868">— ${escapeHtml(r.company || '')}</span></div><div class="fail-reason">${r.already_applied ? 'Already applied' : escapeHtml(r.rejection_reason || 'Score: ' + Math.round(r.overall||0))}</div>`;
         failingEl.appendChild(card);
       });
     }
@@ -762,7 +788,7 @@ function renderHistory() {
     const badgeClass = isPassing ? 'score-pass' : isCred ? 'score-cred' : 'score-fail';
     const borderClass = isPassing ? ' pass-border' : isCred ? ' cred-border' : '';
     const time = r._timestamp ? new Date(r._timestamp).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
-    const masterBadge = r._isMaster ? ' <span class="notion-badge" style="background:#e1f0ff;color:#2563eb;font-size:10px">master</span>' : '';
+    const masterBadge = r._isMaster ? ' <span class="notion-badge" style="background:rgba(59,130,246,0.12);color:#60a5fa;font-size:10px">master</span>' : '';
 
     const item = document.createElement('div');
     item.className = 'history-item' + borderClass;
@@ -800,7 +826,7 @@ function toggleHistoryCard(gi) {
 
 function buildJobCard(r, type, globalIndex) {
   const card = document.createElement('div');
-  card.className = 'job-card';
+  card.className = 'job-card' + (r.pass && !r.already_applied ? ' passing-card' : '');
   const score = Math.round(r.overall || 0);
   const badgeClass = r.already_applied ? 'score-applied' : (r.pass ? 'score-pass' : 'score-fail');
   const badgeText = r.already_applied ? 'Applied' : score + '/100';
@@ -811,7 +837,7 @@ function buildJobCard(r, type, globalIndex) {
       <div class="job-title-row">
         <span class="job-title">${escapeHtml(r.role_title || 'Unknown role')}</span>
         <span class="job-company">${escapeHtml(r.company || '')}${r.location ? ' — ' + escapeHtml(r.location) : ''}</span>
-        ${r._isMaster ? `<span class="notion-badge" style="background:#e1f0ff;color:#2563eb">Synthesized from ${(r._versions||[]).length + 1} versions</span>` : ''}
+        ${r._isMaster ? `<span class="notion-badge" style="background:rgba(59,130,246,0.12);color:#60a5fa">Synthesized from ${(r._versions||[]).length + 1} versions</span>` : ''}
       </div>
       <div style="display:flex;align-items:center;gap:8px">
         <span class="score-badge ${badgeClass}">${badgeText}</span>
@@ -844,22 +870,22 @@ function buildJobCard(r, type, globalIndex) {
 
 function buildScoringTab(r) {
   const score = Math.round(r.overall || 0);
-  let html = `<div class="overall-row"><span class="overall-big">${score}</span><span style="font-size:14px;color:#666">/ 100 overall match</span></div>`;
+  let html = `<div class="overall-row"><span class="overall-big">${score}</span><span style="font-size:14px;color:#8b8d98">/ 100 overall match</span></div>`;
   (r.dimensions || []).forEach(d => {
     const s = Math.round(d.score || 0);
-    const color = s >= 70 ? '#1a9e6e' : s >= 50 ? '#d4880a' : '#c0392b';
+    const color = s >= 70 ? '#34d399' : s >= 50 ? '#fbbf24' : '#f87171';
     html += `<div class="dim-block"><div class="dim-header"><span class="dim-name">${d.name} <span class="dim-weight">(${d.weight}%)</span></span><span class="dim-score-num" style="color:${color}">${s}</span></div><div class="bar-bg"><div class="bar-fill" style="width:${s}%;background:${color}"></div></div><div class="dim-reasoning">${d.reasoning || ''}</div></div>`;
   });
   return html;
 }
 
 function buildResumeTab(r) {
-  if (!r.resume) return '<p style="font-size:13px;color:#999;font-style:italic">No resume generated for this role.</p>';
+  if (!r.resume) return '<p style="font-size:13px;color:#555868;font-style:italic">No resume generated for this role.</p>';
   return `<button class="copy-btn" onclick="copyText(this, \`${escapeForAttr(r.resume)}\`)">Copy</button><div class="resume-box">${escapeHtml(r.resume)}</div>`;
 }
 
 function buildFieldsTab(r) {
-  if (!r.manual_fields) return '<p style="font-size:13px;color:#999;font-style:italic">No manual fields generated.</p>';
+  if (!r.manual_fields) return '<p style="font-size:13px;color:#555868;font-style:italic">No manual fields generated.</p>';
   const fields = [
     { key: 'tiberi', label: 'Tiberi Group, Brandeis University' },
     { key: 'candela', label: 'Candela Medical' },
@@ -873,37 +899,37 @@ function buildFieldsTab(r) {
 }
 
 function buildPhysicsTab(r) {
-  if (!r.physics_connection) return '<p style="font-size:13px;color:#999;font-style:italic">No physics connection map generated.</p>';
+  if (!r.physics_connection) return '<p style="font-size:13px;color:#555868;font-style:italic">No physics connection map generated.</p>';
   return `<div class="physics-map">${escapeHtml(r.physics_connection).replace(/\n\n/g, '</div><div class="physics-map" style="margin-top:10px">')}</div>`;
 }
 
 function buildCommTab(r) {
-  if (!r.communication_map) return '<p style="font-size:13px;color:#999;font-style:italic">No communication map generated.</p>';
+  if (!r.communication_map) return '<p style="font-size:13px;color:#555868;font-style:italic">No communication map generated.</p>';
   return `<div class="comm-map">${escapeHtml(r.communication_map).replace(/\n\n/g, '</div><div class="comm-map" style="margin-top:10px">')}</div>`;
 }
 
 function buildTailoringTab(r) {
   const d = r.tailoring_diff;
-  if (!d && !r.team_context) return '<p style="font-size:13px;color:#999;font-style:italic">No tailoring diff generated.</p>';
+  if (!d && !r.team_context) return '<p style="font-size:13px;color:#555868;font-style:italic">No tailoring diff generated.</p>';
   let html = '';
 
   // Team context
   const tc = r.team_context;
   if (tc) {
-    html += '<div style="margin-bottom:14px;padding:14px;border-radius:8px;background:#f5f0ff;border-left:3px solid #8a4ad4">';
-    html += '<div style="font-size:11px;font-weight:500;color:#8a4ad4;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Team context</div>';
+    html += '<div style="margin-bottom:14px;padding:14px;border-radius:8px;background:rgba(124,58,237,0.08);border-left:3px solid #7c3aed">';
+    html += '<div style="font-size:11px;font-weight:500;color:#a78bfa;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Team context</div>';
     if (tc.team_name) html += `<div style="font-size:13px;font-weight:500;margin-bottom:4px">${escapeHtml(tc.team_name)}</div>`;
-    if (tc.what_they_build) html += `<div style="font-size:12px;color:#444;margin-bottom:4px">${escapeHtml(tc.what_they_build)}</div>`;
-    if (tc.core_challenge) html += `<div style="font-size:12px;color:#444;margin-bottom:4px"><strong>Core challenge:</strong> ${escapeHtml(tc.core_challenge)}</div>`;
-    if (tc.vishnu_connection) html += `<div style="font-size:12px;color:#444"><strong>Vishnu's connection:</strong> ${escapeHtml(tc.vishnu_connection)}</div>`;
+    if (tc.what_they_build) html += `<div style="font-size:12px;color:#8b8d98;margin-bottom:4px">${escapeHtml(tc.what_they_build)}</div>`;
+    if (tc.core_challenge) html += `<div style="font-size:12px;color:#8b8d98;margin-bottom:4px"><strong>Core challenge:</strong> ${escapeHtml(tc.core_challenge)}</div>`;
+    if (tc.vishnu_connection) html += `<div style="font-size:12px;color:#8b8d98"><strong>Vishnu's connection:</strong> ${escapeHtml(tc.vishnu_connection)}</div>`;
     html += '</div>';
   }
 
-  if (!d) return html || '<p style="font-size:13px;color:#999;font-style:italic">No tailoring diff generated.</p>';
+  if (!d) return html || '<p style="font-size:13px;color:#555868;font-style:italic">No tailoring diff generated.</p>';
 
   // Overall strategy
   if (d.overall_strategy) {
-    html += `<div style="font-size:13px;color:#1a1a1a;line-height:1.7;background:#f0f8f0;padding:14px;border-radius:8px;border-left:3px solid #1a9e6e;margin-bottom:14px"><strong>Strategy:</strong> ${escapeHtml(d.overall_strategy)}</div>`;
+    html += `<div style="font-size:13px;color:#e8e6e3;line-height:1.7;background:rgba(16,185,129,0.08);padding:14px;border-radius:8px;border-left:3px solid #10b981;margin-bottom:14px"><strong>Strategy:</strong> ${escapeHtml(d.overall_strategy)}</div>`;
   }
 
   // Section header and Candela variant
@@ -920,10 +946,10 @@ function buildTailoringTab(r) {
   if (d.bullets_modified && d.bullets_modified.length > 0) {
     html += '<div style="font-size:11px;font-weight:500;color:#999;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Modified bullets</div>';
     d.bullets_modified.forEach(b => {
-      html += `<div style="margin-bottom:12px;padding:10px 12px;border-radius:8px;background:#fef9e7;border-left:3px solid #d4880a">`;
-      html += `<div style="font-size:11px;color:#8b5e0a;font-weight:500;margin-bottom:4px">What changed: ${escapeHtml(b.what_changed)}</div>`;
-      html += `<div style="font-size:11px;color:#888;margin-bottom:4px"><strong>Original:</strong> ${escapeHtml((b.original || '').substring(0, 120))}...</div>`;
-      html += `<div style="font-size:11px;color:#444"><strong>Tailored:</strong> ${escapeHtml((b.tailored || '').substring(0, 120))}...</div>`;
+      html += `<div style="margin-bottom:12px;padding:10px 12px;border-radius:8px;background:rgba(245,158,11,0.08);border-left:3px solid #f59e0b">`;
+      html += `<div style="font-size:11px;color:#fbbf24;font-weight:500;margin-bottom:4px">What changed: ${escapeHtml(b.what_changed)}</div>`;
+      html += `<div style="font-size:11px;color:#555868;margin-bottom:4px"><strong>Original:</strong> ${escapeHtml((b.original || '').substring(0, 120))}...</div>`;
+      html += `<div style="font-size:11px;color:#8b8d98"><strong>Tailored:</strong> ${escapeHtml((b.tailored || '').substring(0, 120))}...</div>`;
       html += '</div>';
     });
   }
@@ -931,7 +957,7 @@ function buildTailoringTab(r) {
   // Bullets kept unchanged
   if (d.bullets_kept_unchanged && d.bullets_kept_unchanged.length > 0) {
     html += '<div style="font-size:11px;font-weight:500;color:#999;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;margin-top:12px">Kept as-is</div>';
-    html += '<div style="font-size:12px;color:#666;line-height:1.6;padding:8px 12px;background:#f8f8f6;border-radius:6px">';
+    html += '<div style="font-size:12px;color:#666;line-height:1.6;padding:8px 12px;background:rgba(18,20,28,0.8);border-radius:6px;border:1px solid #2a2d3a">';
     d.bullets_kept_unchanged.forEach(b => { html += `<div style="margin-bottom:4px">- ${escapeHtml(b)}</div>`; });
     html += '</div>';
   }
@@ -940,15 +966,15 @@ function buildTailoringTab(r) {
   if (d.bullets_omitted && d.bullets_omitted.length > 0) {
     html += '<div style="font-size:11px;font-weight:500;color:#999;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;margin-top:12px">Omitted</div>';
     d.bullets_omitted.forEach(b => {
-      html += `<div style="font-size:12px;color:#888;margin-bottom:4px;padding:6px 12px;background:#fce8e8;border-radius:6px;border-left:3px solid #c0392b"><strong>${escapeHtml(b.bullet_summary)}:</strong> ${escapeHtml(b.reason)}</div>`;
+      html += `<div style="font-size:12px;color:#555868;margin-bottom:4px;padding:6px 12px;background:rgba(239,68,68,0.08);border-radius:6px;border-left:3px solid #ef4444"><strong>${escapeHtml(b.bullet_summary)}:</strong> ${escapeHtml(b.reason)}</div>`;
     });
   }
 
-  return html || '<p style="font-size:13px;color:#999;font-style:italic">No tailoring diff data.</p>';
+  return html || '<p style="font-size:13px;color:#555868;font-style:italic">No tailoring diff data.</p>';
 }
 
 function buildVersionsTab(r) {
-  if (!r._versions || r._versions.length === 0) return '<p style="font-size:13px;color:#999;font-style:italic">No previous versions.</p>';
+  if (!r._versions || r._versions.length === 0) return '<p style="font-size:13px;color:#555868;font-style:italic">No previous versions.</p>';
   let html = '';
   if (r._isMaster) {
     html += '<div style="font-size:12px;color:#2563eb;background:#e1f0ff;padding:8px 12px;border-radius:6px;margin-bottom:12px">This is a synthesized master version. The resume, physics connection, and defensibility above are the best elements cherry-picked from all versions below.</div>';
@@ -957,13 +983,13 @@ function buildVersionsTab(r) {
     const score = Math.round(v.overall || 0);
     const time = v._timestamp ? new Date(v._timestamp).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Unknown time';
     const color = v.pass ? '#0a6040' : '#8b2020';
-    html += `<div style="margin-bottom:12px;padding:12px;border:0.5px solid #e0e0e0;border-radius:8px">`;
-    html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px;font-weight:500">Version ${i + 1}</span><span style="font-size:12px;color:#999">${time}</span><span style="font-size:12px;font-weight:500;color:${color}">${score}/100</span></div>`;
+    html += `<div style="margin-bottom:12px;padding:12px;border:1px solid #2a2d3a;border-radius:8px">`;
+    html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px;font-weight:500">Version ${i + 1}</span><span style="font-size:12px;color:#555868">${time}</span><span style="font-size:12px;font-weight:500;color:${color}">${score}/100</span></div>`;
     if (v.resume) {
-      html += `<details style="margin-bottom:6px"><summary style="font-size:11px;color:#666;cursor:pointer">Resume</summary><div class="resume-box" style="max-height:200px;margin-top:6px">${escapeHtml(v.resume)}</div></details>`;
+      html += `<details style="margin-bottom:6px"><summary style="font-size:11px;color:#8b8d98;cursor:pointer">Resume</summary><div class="resume-box" style="max-height:200px;margin-top:6px">${escapeHtml(v.resume)}</div></details>`;
     }
     if (v.physics_connection) {
-      html += `<details><summary style="font-size:11px;color:#666;cursor:pointer">Physics connection</summary><div style="font-size:12px;color:#444;line-height:1.6;margin-top:6px;padding:8px;background:#f8f8f6;border-radius:6px">${escapeHtml(v.physics_connection)}</div></details>`;
+      html += `<details><summary style="font-size:11px;color:#8b8d98;cursor:pointer">Physics connection</summary><div style="font-size:12px;color:#8b8d98;line-height:1.6;margin-top:6px;padding:8px;background:rgba(18,20,28,0.8);border-radius:6px;border:1px solid #2a2d3a">${escapeHtml(v.physics_connection)}</div></details>`;
     }
     html += '</div>';
   });
@@ -971,7 +997,7 @@ function buildVersionsTab(r) {
 }
 
 function buildDefenseTab(r) {
-  if (!r.defensibility || r.defensibility.length === 0) return '<p style="font-size:13px;color:#999;font-style:italic">No defensibility assessment generated.</p>';
+  if (!r.defensibility || r.defensibility.length === 0) return '<p style="font-size:13px;color:#555868;font-style:italic">No defensibility assessment generated.</p>';
   return r.defensibility.map(d => {
     const tierClass = d.tier === 'READY NOW' ? 'def-low' : d.tier === 'PREPARATION PATH' ? 'def-med' : 'def-high';
     const tierLabel = d.tier === 'READY NOW' ? 'Ready now — defend cold' : d.tier === 'PREPARATION PATH' ? 'Preparation path exists' : 'Genuine gap — reframe needed';
