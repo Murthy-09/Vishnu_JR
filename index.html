@@ -90,6 +90,10 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 .processing-card { background: #fff; border: 0.5px solid #e0e0e0; border-radius: 12px; padding: 1.25rem; margin-bottom: 14px; }
 .fail-card { background: #fff; border: 0.5px solid #f0d0d0; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
 .fail-reason { font-size: 12px; color: #888; }
+.sync-icon { font-size: 11px; margin-left: 6px; }
+.sync-pending { color: #999; }
+.sync-ok { color: #0a6040; }
+.sync-fail { color: #c0392b; }
 </style>
 </head>
 <body>
@@ -151,7 +155,17 @@ Paste job posting 3 here..."></textarea>
 <script>
 const WORKER_URL = "https://vishnujr.vishnu-c5c.workers.dev";
 
-const SYSTEM_PROMPT = `You are Vishnu Murthy's personal career intelligence agent. You have deep knowledge of his full professional profile provided in the knowledge base. Your job is to score job postings and generate complete application packages.
+const SCORING_PROMPT = `You are Vishnu Murthy's personal career intelligence agent. You have deep knowledge of his full professional profile provided in the knowledge base. Your job is to quickly score job postings across 7 dimensions and determine if they pass a 70% threshold.
+
+Vishnu's profile summary for scoring:
+- BS Physics (Honors), Brandeis University, graduating May 2026. US Citizen.
+- Core: Built Hopkins/TCC partial coherence optical inspection simulator from scratch. 45% contrast improvement at 250nm pitch. Cleared two KLA PROLITH technical rounds at MS/PhD level.
+- Candela Medical R&D Intern (Summer 2025): Monte Carlo + COMSOL + Zemax multi-physics simulation for IPL devices. BKMs, FDA regulatory docs.
+- Skills: Python, MATLAB, COMSOL, Zemax, Monte Carlo, Hopkins/TCC theory, darkfield/brightfield inspection, optical metrology, DOE.
+- Target: semiconductor capital equipment (KLA, ASML, Onto, Applied Materials, Halo Industries). Backup: Candela Medical R&D or RA.
+- Already applied: KLA TSE Phoenix (Req 2533268), KLA TSE Chandler (Req 2634259).
+- Locations preferred: Phoenix/Chandler AZ, Boston/Waltham/Wilmington MA. Acceptable: Bay Area, OR, CT, TX.
+- Cannot do: active security clearance, international relocation, power electronics/GaAs with no optics overlap.
 
 === SCORING — 7 DIMENSIONS, WEIGHTED AVERAGE, THRESHOLD 70 ===
 
@@ -196,15 +210,40 @@ D6 Company tier and strategic value (5%):
 0-29: Unrelated industries
 
 D7 Communication and professional development value (10%):
-90-100: Regulatory affairs, applications engineering, customer-facing field roles, cross-functional roles with senior stakeholder interaction, heavy meeting and documentation exposure — directly addresses Vishnu's stated priority of developing corporate communication skills
+90-100: Regulatory affairs, applications engineering, customer-facing field roles, cross-functional roles with senior stakeholder interaction, heavy meeting and documentation exposure -- directly addresses Vishnu's stated priority of developing corporate communication skills
 70-89: R&D with cross-functional collaboration, technical writing heavy, customer interaction component
 50-69: Lab or simulation with some team interaction
 30-49: Mostly individual contributor, limited communication development
 0-29: Purely heads-down with no communication development value
 
 SPECIAL RULES:
-- Regulatory affairs at medical device companies: score minimum 65 in D4 if full-time conversion is realistic AND minimum 85 in D7 — financial independence plus communication development justifies this bridge
+- Regulatory affairs at medical device companies: score minimum 65 in D4 if full-time conversion is realistic AND minimum 85 in D7
 - Already applied roles: note this and do not generate resume
+
+=== OUTPUT FORMAT ===
+
+Return ONLY valid JSON, no markdown fences, no preamble:
+
+{
+  "role_title": "<job title>",
+  "company": "<company>",
+  "location": "<location>",
+  "overall": <integer 0-100>,
+  "pass": <boolean>,
+  "already_applied": <boolean>,
+  "dimensions": [
+    {"name": "Technical skills overlap", "weight": 25, "score": <int>, "reasoning": "<2 sentences>"},
+    {"name": "Experience level fit", "weight": 20, "score": <int>, "reasoning": "<2 sentences>"},
+    {"name": "Location acceptability", "weight": 12, "score": <int>, "reasoning": "<2 sentences>"},
+    {"name": "Career trajectory alignment", "weight": 18, "score": <int>, "reasoning": "<2 sentences>"},
+    {"name": "Qualification barrier", "weight": 10, "score": <int>, "reasoning": "<2 sentences>"},
+    {"name": "Company tier and strategic value", "weight": 5, "score": <int>, "reasoning": "<2 sentences>"},
+    {"name": "Communication and professional development value", "weight": 10, "score": <int>, "reasoning": "<2 sentences>"}
+  ],
+  "rejection_reason": "<if pass is false: brief explanation>"
+}`;
+
+const SYSTEM_PROMPT = `You are Vishnu Murthy's personal career intelligence agent. This posting has already passed the 70% scoring threshold. Generate the complete application package using the scoring data and knowledge base provided.
 
 === RESUME RULES (NON-NEGOTIABLE) ===
 1. One page maximum
@@ -366,15 +405,33 @@ function saveResultsToStorage(timestamp) {
   localStorage.setItem('vj_results', JSON.stringify({ results, timestamp }));
 }
 
-async function saveResultToNotion(result, timestamp) {
-  // Fire-and-forget persist to Notion
+async function saveResultToNotion(result, timestamp, index) {
+  result._sync = 'pending';
+  updateSyncIcon(index);
   try {
-    await fetch(`${WORKER_URL}/save-result`, {
+    const res = await fetch(`${WORKER_URL}/save-result`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ result, timestamp })
     });
-  } catch(e) { console.warn('Notion save failed:', e.message); }
+    const data = await res.json();
+    result._sync = data.success ? 'ok' : 'fail';
+  } catch(e) {
+    console.warn('Notion save failed:', e.message);
+    result._sync = 'fail';
+  }
+  updateSyncIcon(index);
+}
+
+function updateSyncIcon(index) {
+  const el = document.getElementById('sync-' + index);
+  if (!el) return;
+  const r = results[index];
+  if (!r || !r._sync) return;
+  const labels = { pending: 'syncing...', ok: 'synced', fail: 'sync failed' };
+  const classes = { pending: 'sync-pending', ok: 'sync-ok', fail: 'sync-fail' };
+  el.textContent = labels[r._sync];
+  el.className = 'sync-icon ' + classes[r._sync];
 }
 
 async function runBatch() {
@@ -409,12 +466,12 @@ async function runBatch() {
       result._raw = posting;
       results.push(result);
       saveResultsToStorage(timestamp);
-      saveResultToNotion(result, timestamp);
+      saveResultToNotion(result, timestamp, results.length - 1);
     } catch(e) {
       const errResult = { role_title: `Posting ${i+1}`, company: 'Unknown', location: '', overall: 0, pass: false, rejection_reason: 'Processing error: ' + e.message, _raw: posting };
       results.push(errResult);
       saveResultsToStorage(timestamp);
-      saveResultToNotion(errResult, timestamp);
+      saveResultToNotion(errResult, timestamp, results.length - 1);
     }
 
     await new Promise(r => setTimeout(r, 800));
@@ -428,22 +485,53 @@ async function runBatch() {
   document.getElementById('runBtn').disabled = false;
 }
 
-async function analyzePosting(posting) {
-  const systemPrompt = SYSTEM_PROMPT + '\n\n=== LIVE KNOWLEDGE BASE FROM NOTION ===\n' + cachedKnowledge;
-  const res = await fetch(`${WORKER_URL}/analyze`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'claude-opus-4-6',
-      max_tokens: 8000,
-      system: systemPrompt,
-      messages: [{ role: 'user', content: 'Analyze this job posting and return the complete JSON package:\n\n' + posting }]
-    })
-  });
-  const data = await res.json();
+function parseAgentResponse(data) {
   if (data.error) throw new Error(data.error.message);
   const text = data.content?.find(b => b.type === 'text')?.text || '';
   return JSON.parse(text.replace(/```json|```/g, '').trim());
+}
+
+async function callAgent(model, maxTokens, system, userContent) {
+  const res = await fetch(`${WORKER_URL}/analyze`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model, max_tokens: maxTokens, system, messages: [{ role: 'user', content: userContent }] })
+  });
+  return res.json();
+}
+
+async function analyzePosting(posting) {
+  // Step 1: Score with Sonnet (fast, cheap)
+  const scoringSystem = SCORING_PROMPT + '\n\n=== LIVE KNOWLEDGE BASE FROM NOTION ===\n' + cachedKnowledge;
+  const scoreData = await callAgent('claude-sonnet-4-6', 1500, scoringSystem, 'Score this job posting and return the JSON:\n\n' + posting);
+  const scoreResult = parseAgentResponse(scoreData);
+
+  // Validate weighted average
+  if (scoreResult.dimensions) {
+    const calcOverall = Math.round(scoreResult.dimensions.reduce((sum, d) => sum + (d.score * d.weight / 100), 0));
+    if (Math.abs(calcOverall - scoreResult.overall) > 3) {
+      scoreResult.overall = calcOverall;
+      scoreResult.pass = calcOverall >= 70;
+    }
+  }
+
+  // If below threshold or already applied, return scoring-only result
+  if (!scoreResult.pass || scoreResult.already_applied) {
+    return scoreResult;
+  }
+
+  // Step 2: Full package with Opus (only for passing roles)
+  const fullSystem = SYSTEM_PROMPT + '\n\n=== LIVE KNOWLEDGE BASE FROM NOTION ===\n' + cachedKnowledge;
+  const fullPrompt = 'Generate the complete application package for this passing job posting.\n\nScoring data from pre-screen:\n' + JSON.stringify(scoreResult) + '\n\nFull job posting:\n\n' + posting;
+  const fullData = await callAgent('claude-opus-4-6', 8000, fullSystem, fullPrompt);
+  const fullResult = parseAgentResponse(fullData);
+
+  // Merge: keep Sonnet's scoring, use Opus's full package
+  fullResult.dimensions = scoreResult.dimensions;
+  fullResult.overall = scoreResult.overall;
+  fullResult.pass = scoreResult.pass;
+
+  return fullResult;
 }
 
 function renderResults(timestamp) {
@@ -461,7 +549,10 @@ function renderResults(timestamp) {
     h.style.cssText = 'font-size:13px;font-weight:500;color:#0a6040;margin-bottom:10px;';
     h.textContent = `${passing.length} roles worth pursuing`;
     passingEl.appendChild(h);
-    passing.forEach((r, i) => passingEl.appendChild(buildJobCard(r, 'pass')));
+    passing.forEach(r => {
+      const gi = results.indexOf(r);
+      passingEl.appendChild(buildJobCard(r, 'pass', gi));
+    });
   }
 
   const failingEl = document.getElementById('failingResults');
@@ -474,24 +565,28 @@ function renderResults(timestamp) {
     [...failing, ...applied].forEach(r => {
       const card = document.createElement('div');
       card.className = 'fail-card';
-      card.innerHTML = `<div><span style="font-size:13px;font-weight:500">${r.role_title || 'Unknown role'}</span> <span style="font-size:12px;color:#888">— ${r.company || ''}</span></div><div class="fail-reason">${r.already_applied ? 'Already applied' : (r.rejection_reason || 'Score: ' + Math.round(r.overall||0))}</div>`;
+      card.innerHTML = `<div><span style="font-size:13px;font-weight:500">${escapeHtml(r.role_title || 'Unknown role')}</span> <span style="font-size:12px;color:#888">— ${escapeHtml(r.company || '')}</span></div><div class="fail-reason">${r.already_applied ? 'Already applied' : escapeHtml(r.rejection_reason || 'Score: ' + Math.round(r.overall||0))}</div>`;
       failingEl.appendChild(card);
     });
   }
 }
 
-function buildJobCard(r, type) {
+function buildJobCard(r, type, globalIndex) {
   const card = document.createElement('div');
   card.className = 'job-card';
   const score = Math.round(r.overall || 0);
   const badgeClass = r.already_applied ? 'score-applied' : (r.pass ? 'score-pass' : 'score-fail');
   const badgeText = r.already_applied ? 'Applied' : score + '/100';
+  const syncState = r._sync || '';
+  const syncLabel = { pending: 'syncing...', ok: 'synced', fail: 'sync failed' }[syncState] || '';
+  const syncClass = { pending: 'sync-pending', ok: 'sync-ok', fail: 'sync-fail' }[syncState] || 'sync-pending';
 
   card.innerHTML = `
     <div class="job-card-header" onclick="toggleCard(this)">
       <div class="job-title-row">
-        <span class="job-title">${r.role_title || 'Unknown role'}</span>
-        <span class="job-company">${r.company || ''}${r.location ? ' — ' + r.location : ''}</span>
+        <span class="job-title">${escapeHtml(r.role_title || 'Unknown role')}</span>
+        <span class="job-company">${escapeHtml(r.company || '')}${r.location ? ' — ' + escapeHtml(r.location) : ''}</span>
+        <span class="sync-icon ${syncClass}" id="sync-${globalIndex}">${syncLabel}</span>
       </div>
       <div style="display:flex;align-items:center;gap:8px">
         <span class="score-badge ${badgeClass}">${badgeText}</span>
