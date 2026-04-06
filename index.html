@@ -258,105 +258,21 @@ Paste job posting 3 here..."></textarea>
 <script>
 const WORKER_URL = "https://vishnujr.vishnu-c5c.workers.dev";
 
-const SCORING_PROMPT = `You are Vishnu Murthy's personal career intelligence agent. You have deep knowledge of his full professional profile provided in the knowledge base. Your job is to quickly score job postings across 7 dimensions and determine if they pass a 70% threshold.
+const SCORING_PROMPT = `Score this job posting for Vishnu Murthy. Return JSON only.
 
-Vishnu's profile summary for scoring:
-- BS Physics (Honors), Brandeis University, graduating May 2026. US Citizen.
-- Core: Built Hopkins/TCC partial coherence optical inspection simulator from scratch. 45% contrast improvement at 250nm pitch. Cleared two KLA PROLITH technical rounds at MS/PhD level.
-- Candela Medical R&D Intern (Summer 2025): Monte Carlo + COMSOL + Zemax multi-physics simulation for IPL devices. BKMs, FDA regulatory docs.
-- Skills: Python, MATLAB, COMSOL, Zemax, Monte Carlo, Hopkins/TCC theory, darkfield/brightfield inspection, optical metrology, DOE.
-- Target: semiconductor capital equipment (KLA, ASML, Onto, Applied Materials, Halo Industries). Backup: Candela Medical R&D or RA.
-- Already applied: KLA TSE Phoenix (Req 2533268), KLA TSE Chandler (Req 2634259).
-- Locations preferred: Phoenix/Chandler AZ, Boston/Waltham/Wilmington MA. Acceptable: Bay Area, OR, CT, TX.
-- Cannot do: active security clearance, international relocation, power electronics/GaAs with no optics overlap.
+VISHNU: BS Physics, Brandeis 2026. US Citizen. Built Hopkins/TCC optical inspection simulator (45% contrast improvement, 250nm pitch). Cleared 2 KLA PROLITH technical rounds. Candela Medical R&D Intern: Monte Carlo+COMSOL+Zemax simulation, BKMs, FDA docs. Skills: Python, MATLAB, COMSOL, Zemax, Monte Carlo, Hopkins/TCC, darkfield/brightfield inspection, optical metrology, DOE, failure analysis, data analytics, defect detection, semiconductor device physics, process control, BKM documentation. Already applied: KLA TSE Phoenix (2533268), KLA TSE Chandler (2634259). Preferred locations: Phoenix/Chandler AZ, Boston/Waltham MA. Acceptable: Bay Area, OR, CT, TX. Reject: security clearance required, international, power electronics/GaAs.
 
-=== SCORING — 7 DIMENSIONS, WEIGHTED AVERAGE, THRESHOLD 70 ===
+SCORE 7 DIMENSIONS (weighted average, pass=70+):
+D1 Technical overlap (25%): Check posting's desired skills vs Vishnu's actual skills. 90-100=direct optical/metrology match. 70-89=3+ skill overlaps in posting. 50-69=1-2 overlaps. 30-49=weak. 0-29=none.
+D2 Experience fit (20%): 90-100=BS+0-2yr OK. 70-89=BS+2yr arguable. 50-69=MS preferred. 30-49=MS/PhD required. 0-29=PhD/clearance.
+D3 Location (12%): 100=Phoenix/Chandler/Boston/Waltham/Wilmington. 85=Bay Area/OR/CT/TX. 70=other US. 0=international.
+D4 Trajectory (18%): 90-100=KLA/ASML/Onto/Applied/Halo direct. 70-89=photonics R&D. 60-69=credential builder (fab/cleanroom/SPC fills gap). 50-59=Candela RA bridge. 30-49=weak. 0-29=detour.
+D5 Barrier (10%): 100=BS OK. 70=stretch. 30=MS preferred. 0=PhD/clearance required.
+D6 Company (5%): 90-100=KLA/ASML/Applied/Onto/Nvidia/Halo. 70-89=Lumentum/Coherent/Candela/Micron/Intel/ZEISS. 50-69=general semi. 0-29=unrelated.
+D7 Communication (10%): 90-100=customer-facing/RA/AE. 70-89=cross-functional. 50-69=some team. 30-49=individual. 0-29=none.
 
-D1 Technical skills overlap (25%):
-IMPORTANT: Before scoring D1, check the posting's desired/preferred skills list carefully. Score based on how many of Vishnu's ACTUAL skills appear in the requirements, not just whether the job title says "optical" or "inspection." Vishnu's transferable skills include: DOE and systematic parameter sweeps, failure analysis and defect detection, data analytics (Python, MATLAB, JMP), optical characterization and metrology, semiconductor device physics, process control via SNR/CD/MTF measurement, simulation (COMSOL, Zemax, Monte Carlo), and BKM/technical documentation.
-90-100: Direct match — optical inspection, metrology, laser systems, darkfield physics, Hopkins/TCC
-70-89: Strong adjacent — photonics, optical engineering, precision measurement, OR semiconductor ecosystem roles where 3+ of Vishnu's actual skills (DOE, failure analysis, data analytics, defect detection, semiconductor device physics, process control, optical characterization) appear in the posting's desired qualifications
-50-69: Moderate — general physics or semiconductor roles where 1-2 skills overlap
-30-49: Weak — EE, mechanical, adjacent but different, no skill overlap in requirements
-0-29: No match — power electronics, embedded systems, GaAs etch, pure software
-
-D2 Experience level fit (20%):
-90-100: BS + 0-2 years explicitly OK or equivalent work experience language
-70-89: BS + 2 years required, medical device plus research makes equivalent case
-50-69: MS preferred but BS considered
-30-49: MS/PhD required, hard structural barrier
-0-29: PhD required or active security clearance needed
-
-D3 Location acceptability (12%):
-100: Phoenix AZ, Chandler AZ, Waltham/Boston MA, Wilmington MA
-85: Bay Area CA, Oregon, Connecticut, New York, Texas
-70: Midwest, Southeast, other US
-40: Boise ID
-0: Singapore, Germany, international relocation
-
-D4 Career trajectory alignment (18%):
-90-100: Direct path — KLA TSE, Onto Innovation AE, ASML CSE, Applied Materials, Halo Industries optics
-70-89: Strong adjacent — photonics R&D, laser systems engineering
-60-69: Credential builder — role fills a documented gap that Tier 1 target roles list as preferred (fab process experience, cleanroom operations, SPC/process control, hands-on tool operation, thin film or etch process knowledge). The role itself is not the target, but the experience it provides makes Vishnu a stronger candidate for inspection/metrology/AE roles later. Score 60-69 and flag as "credential builder -- worth considering despite trajectory gap."
-50-59: Acceptable bridge — Candela RA, medical device regulatory, general optical engineering
-30-49: Weak alignment — general engineering, non-optics with no credential-building value
-0-29: Active detour — power semiconductors, embedded systems, unrelated industries
-
-D5 Qualification barrier (10%):
-100: No hard blockers, BS accessible
-70: Stretch but manageable with cover letter argument
-30: MS strongly preferred
-0: Active security clearance, PhD mandatory, graduating senior for sophomore/junior intern eligibility mismatch
-
-D6 Company tier and strategic value (5%):
-90-100: KLA, ASML, Applied Materials, Onto Innovation, Nvidia, Halo Industries
-70-89: Lumentum, Coherent, Candela Medical, Micron, Intel, ZEISS
-50-69: General semiconductor, photonics startups, medical device companies
-0-29: Unrelated industries
-
-D7 Communication and professional development value (10%):
-90-100: Regulatory affairs, applications engineering, customer-facing field roles, cross-functional roles with senior stakeholder interaction, heavy meeting and documentation exposure -- directly addresses Vishnu's stated priority of developing corporate communication skills
-70-89: R&D with cross-functional collaboration, technical writing heavy, customer interaction component
-50-69: Lab or simulation with some team interaction
-30-49: Mostly individual contributor, limited communication development
-0-29: Purely heads-down with no communication development value
-
-SPECIAL RULES:
-- Regulatory affairs at medical device companies: score minimum 65 in D4 if full-time conversion is realistic AND minimum 85 in D7
-- Already applied roles: note this and do not generate resume
-- Credential builder roles: if a role scores 60-69 in D4 because it fills a known gap (fab experience, cleanroom, SPC, process control), include "CREDENTIAL BUILDER" in the rejection_reason or in a note if passing. Fab process experience is a documented gap -- Tier 1 AE/TSE roles at KLA, ASML, and Onto list it as preferred.
-
-=== OUTPUT FORMAT ===
-
-Return ONLY valid JSON, no markdown fences, no preamble:
-
-{
-  "role_title": "<job title>",
-  "company": "<company>",
-  "location": "<location>",
-  "overall": <integer 0-100>,
-  "pass": <boolean>,
-  "already_applied": <boolean>,
-  "dimensions": [
-    {"name": "Technical skills overlap", "weight": 25, "score": <int>, "reasoning": "<2 sentences>"},
-    {"name": "Experience level fit", "weight": 20, "score": <int>, "reasoning": "<2 sentences>"},
-    {"name": "Location acceptability", "weight": 12, "score": <int>, "reasoning": "<2 sentences>"},
-    {"name": "Career trajectory alignment", "weight": 18, "score": <int>, "reasoning": "<2 sentences>"},
-    {"name": "Qualification barrier", "weight": 10, "score": <int>, "reasoning": "<2 sentences>"},
-    {"name": "Company tier and strategic value", "weight": 5, "score": <int>, "reasoning": "<2 sentences>"},
-    {"name": "Communication and professional development value", "weight": 10, "score": <int>, "reasoning": "<2 sentences>"}
-  ],
-  "rejection_reason": "<if pass is false: brief explanation>",
-  "knowledge_nodes": [
-    {
-      "concept": "<specific technical concept, skill, or industry practice from this posting -- e.g. 'stepper optics', 'SPC', 'RCWA modeling', 'EUV pellicle', 'ion beam sputtering'>",
-      "category": "<one of: optical_systems, metrology, process_engineering, simulation, materials, equipment, regulatory, data_analytics, fabrication>",
-      "relevance": "<1 sentence: why this concept matters for this role and how it connects to the semiconductor/optics industry>"
-    }
-  ]
-}
-
-IMPORTANT: Always extract 3-8 knowledge_nodes from EVERY posting, even failing ones. These represent industry concepts worth knowing about. Focus on specific technical terms, not generic skills like 'teamwork'. Each node should be a concept Vishnu could study or explore to broaden his industry understanding.`;
+Return ONLY valid JSON:
+{"role_title":"...","company":"...","location":"...","overall":<int>,"pass":<bool>,"already_applied":<bool>,"dimensions":[{"name":"Technical skills overlap","weight":25,"score":<int>,"reasoning":"<1 sentence>"},{"name":"Experience level fit","weight":20,"score":<int>,"reasoning":"<1 sentence>"},{"name":"Location acceptability","weight":12,"score":<int>,"reasoning":"<1 sentence>"},{"name":"Career trajectory alignment","weight":18,"score":<int>,"reasoning":"<1 sentence>"},{"name":"Qualification barrier","weight":10,"score":<int>,"reasoning":"<1 sentence>"},{"name":"Company tier","weight":5,"score":<int>,"reasoning":"<1 sentence>"},{"name":"Communication value","weight":10,"score":<int>,"reasoning":"<1 sentence>"}],"rejection_reason":"<brief if fail>","knowledge_nodes":[{"concept":"<technical term>","category":"<optical_systems|metrology|process_engineering|simulation|materials|equipment|regulatory|data_analytics|fabrication>","relevance":"<10 words max>"}]}`;
 
 const SYSTEM_PROMPT = `You are Vishnu Murthy's personal career intelligence agent. This posting has already passed the 70% scoring threshold. Generate the complete application package using the scoring data and knowledge base provided.
 
