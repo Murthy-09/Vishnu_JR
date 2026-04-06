@@ -139,16 +139,38 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 .history-item-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .history-item-meta { font-size: 11px; color: var(--text-muted); }
 .batch-label { font-size: 11px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
+/* Two-column layout */
+.app-layout { display: flex; gap: 16px; max-width: 1400px; margin: 0 auto; padding: 2rem 1.5rem; }
+.main-col { flex: 1; min-width: 0; max-width: 660px; }
+.side-col { width: 420px; flex-shrink: 0; position: sticky; top: 1rem; max-height: calc(100vh - 2rem); display: flex; flex-direction: column; }
+@media (max-width: 1100px) { .app-layout { flex-direction: column; max-width: 920px; } .side-col { width: 100%; position: static; max-height: none; } }
+/* Surf panel */
+.surf-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.surf-header { padding: 12px 1.25rem; border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; gap: 8px; }
+.surf-title { font-size: 13px; font-weight: 600; color: var(--text); }
+.surf-count { font-size: 11px; color: var(--text-muted); }
+.surf-graph-wrap { flex: 1; overflow: hidden; position: relative; cursor: grab; min-height: 400px; }
+.surf-graph-wrap:active { cursor: grabbing; }
+.surf-graph-wrap svg { will-change: transform; transition: transform 0.08s ease-out; }
+.surf-detail { padding: 12px 1.25rem; border-top: 1px solid var(--border-subtle); max-height: 200px; overflow-y: auto; display: none; }
+.surf-detail.open { display: block; }
+.surf-detail-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.surf-detail-cat { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+.surf-source { font-size: 12px; color: var(--text-dim); line-height: 1.6; padding: 6px 0; border-bottom: 1px solid var(--border-subtle); }
+.surf-source:last-child { border-bottom: none; }
+.surf-source-company { font-weight: 500; color: var(--text); }
+.surf-empty { padding: 3rem 1.25rem; text-align: center; color: var(--text-muted); font-size: 13px; line-height: 1.7; }
 /* Pixel art: optical prism */
 .prism-art { display: inline-block; width: 1px; height: 1px; margin-right: 16px; margin-bottom: -8px; vertical-align: middle; transform: scale(2.5); transform-origin: top left;
   box-shadow: -8px 7px 0 var(--text), -7px 7px 0 var(--text), -6px 7px 0 var(--text), -5px 7px 0 var(--text), -4px 7px 0 var(--text), 0px 0px 0 var(--text-dim), -1px 2px 0 var(--text-dim), 1px 2px 0 var(--text-dim), -2px 4px 0 var(--text-dim), 2px 4px 0 var(--text-dim), -3px 6px 0 var(--text-dim), -2px 6px 0 var(--text-muted), -1px 6px 0 var(--text-muted), 0px 6px 0 var(--text-muted), 1px 6px 0 var(--text-muted), 2px 6px 0 var(--text-muted), 3px 6px 0 var(--text-dim), -3px 8px 0 var(--text-dim), 3px 8px 0 var(--text-dim), -4px 10px 0 var(--text-dim), 4px 10px 0 var(--text-dim), -5px 12px 0 var(--text-dim), -4px 12px 0 var(--text-dim), -3px 12px 0 var(--text-dim), -2px 12px 0 var(--text-dim), -1px 12px 0 var(--text-dim), 0px 12px 0 var(--text-dim), 1px 12px 0 var(--text-dim), 2px 12px 0 var(--text-dim), 3px 12px 0 var(--text-dim), 4px 12px 0 var(--text-dim), 5px 12px 0 var(--text-dim), 5px 4px 0 var(--violet), 6px 3px 0 var(--violet), 7px 2px 0 var(--violet), 5px 5px 0 var(--blue), 6px 5px 0 var(--blue), 7px 4px 0 var(--blue), 5px 6px 0 var(--cyan), 6px 6px 0 var(--cyan), 7px 6px 0 var(--cyan), 5px 7px 0 var(--green), 6px 7px 0 var(--green), 7px 7px 0 var(--green), 5px 8px 0 var(--yellow), 6px 8px 0 var(--yellow), 7px 9px 0 var(--yellow), 5px 9px 0 var(--orange), 6px 10px 0 var(--orange), 7px 11px 0 var(--orange), 5px 10px 0 var(--red), 6px 11px 0 var(--red), 7px 12px 0 var(--red); }
 </style>
 </head>
 <body>
-<div class="container">
+<div class="app-layout">
+<div class="main-col">
 
 <h1><span class="prism-art"></span>Vishnu JR <span class="notion-badge">Batch Mode</span></h1>
-<p class="subtitle">Paste up to 20 job postings separated by --- on its own line. The agent processes them overnight using Claude Opus, scores each across 7 dimensions, and generates complete application packages for roles that pass 70%. Results persist to Notion and survive browser close.</p>
+<p class="subtitle">Paste up to 20 job postings separated by --- on its own line. Scores each across 7 dimensions, generates application packages for roles that pass 70%.</p>
 
 
 <div class="card">
@@ -209,14 +231,30 @@ Paste job posting 3 here..."></textarea>
         <button class="history-toggle-btn" onclick="toggleHistory()">
           <span id="historyToggleText">Show</span>
         </button>
-        <button class="history-toggle-btn" style="color:#c0392b;border-color:#f0c0c0" onclick="clearAllHistory()">Clear</button>
+        <button class="history-toggle-btn" style="color:var(--red);border-color:rgba(239,68,68,0.3)" onclick="clearAllHistory()">Clear</button>
       </div>
     </div>
     <div class="history-body" id="historyBody"></div>
   </div>
 </div>
 
+</div><!-- end main-col -->
+
+<div class="side-col">
+  <div class="surf-card">
+    <div class="surf-header">
+      <span class="surf-title">Surf</span>
+      <span class="surf-count" id="surfCount">0 concepts</span>
+    </div>
+    <div class="surf-graph-wrap" id="surfGraphWrap">
+      <div class="surf-empty" id="surfEmpty">Process job postings to discover industry concepts. Each role adds nodes to your knowledge web.</div>
+      <svg id="surfSvg" width="100%" height="100%" style="display:none"></svg>
+    </div>
+    <div class="surf-detail" id="surfDetail"></div>
+  </div>
 </div>
+
+</div><!-- end app-layout -->
 <script>
 const WORKER_URL = "https://vishnujr.vishnu-c5c.workers.dev";
 
@@ -308,8 +346,17 @@ Return ONLY valid JSON, no markdown fences, no preamble:
     {"name": "Company tier and strategic value", "weight": 5, "score": <int>, "reasoning": "<2 sentences>"},
     {"name": "Communication and professional development value", "weight": 10, "score": <int>, "reasoning": "<2 sentences>"}
   ],
-  "rejection_reason": "<if pass is false: brief explanation>"
-}`;
+  "rejection_reason": "<if pass is false: brief explanation>",
+  "knowledge_nodes": [
+    {
+      "concept": "<specific technical concept, skill, or industry practice from this posting -- e.g. 'stepper optics', 'SPC', 'RCWA modeling', 'EUV pellicle', 'ion beam sputtering'>",
+      "category": "<one of: optical_systems, metrology, process_engineering, simulation, materials, equipment, regulatory, data_analytics, fabrication>",
+      "relevance": "<1 sentence: why this concept matters for this role and how it connects to the semiconductor/optics industry>"
+    }
+  ]
+}
+
+IMPORTANT: Always extract 3-8 knowledge_nodes from EVERY posting, even failing ones. These represent industry concepts worth knowing about. Focus on specific technical terms, not generic skills like 'teamwork'. Each node should be a concept Vishnu could study or explore to broaden his industry understanding.`;
 
 const SYSTEM_PROMPT = `You are Vishnu Murthy's personal career intelligence agent. This posting has already passed the 70% scoring threshold. Generate the complete application package using the scoring data and knowledge base provided.
 
@@ -497,6 +544,7 @@ function upsertResult(result) {
 window.onload = () => {
   loadKnowledge();
   loadSavedResults();
+  loadGraph();
 };
 
 async function loadKnowledge() {
@@ -601,6 +649,8 @@ async function runBatch() {
       result._raw = posting;
       const idx = upsertResult(result);
       currentBatchKeys.push(result._key);
+      mergeNodes(result);
+      animateSettle(40);
 
       // Synthesize master version if this role has previous versions and passes
       if (result._versions.length > 0 && result.pass) {
@@ -1056,8 +1106,240 @@ async function clearAllHistory() {
   document.getElementById('failingResults').innerHTML = '';
   document.getElementById('history-section').style.display = 'none';
   document.getElementById('historyBody').innerHTML = '';
+  knowledgeGraph = {}; graphNodes = []; graphEdges = [];
+  localStorage.removeItem('vj_graph');
+  selectedNode = null;
+  renderGraph();
   try { await fetch(`${WORKER_URL}/clear-results`, { method: 'POST' }); } catch(e) { console.warn('Notion clear failed:', e.message); }
 }
+
+// === KNOWLEDGE GRAPH (Surf Panel) ===
+
+const CATEGORY_COLORS = {
+  optical_systems: '#7c3aed', metrology: '#06b6d4', process_engineering: '#10b981',
+  simulation: '#3b82f6', materials: '#f59e0b', equipment: '#f97316',
+  regulatory: '#ef4444', data_analytics: '#8b5cf6', fabrication: '#14b8a6'
+};
+
+let knowledgeGraph = {};
+let graphNodes = [];
+let graphEdges = [];
+let surfZoom = 1;
+let surfPanX = 0, surfPanY = 0;
+let isDragging = false, dragStartX = 0, dragStartY = 0, panStartX = 0, panStartY = 0;
+let selectedNode = null;
+
+function loadGraph() {
+  const saved = localStorage.getItem('vj_graph');
+  if (saved) { try { knowledgeGraph = JSON.parse(saved); } catch(e) {} }
+  rebuildGraphArrays();
+  renderGraph();
+}
+
+function saveGraph() {
+  localStorage.setItem('vj_graph', JSON.stringify(knowledgeGraph));
+}
+
+function mergeNodes(result) {
+  if (!result.knowledge_nodes || !Array.isArray(result.knowledge_nodes)) return;
+  const source = { company: result.company || '', role_title: result.role_title || '', score: result.overall || 0 };
+  const resultNodeKeys = [];
+  result.knowledge_nodes.forEach(node => {
+    if (!node.concept) return;
+    const key = node.concept.toLowerCase().trim();
+    resultNodeKeys.push(key);
+    if (!knowledgeGraph[key]) {
+      knowledgeGraph[key] = { concept: node.concept, category: node.category || 'optical_systems', sources: [], edges: [] };
+    }
+    const existing = knowledgeGraph[key];
+    if (!existing.sources.find(s => s.company === source.company && s.role_title === source.role_title)) {
+      existing.sources.push({ ...source, relevance: node.relevance || '' });
+    }
+  });
+  // Build edges: nodes from the same result are connected
+  for (let i = 0; i < resultNodeKeys.length; i++) {
+    for (let j = i + 1; j < resultNodeKeys.length; j++) {
+      if (knowledgeGraph[resultNodeKeys[i]] && !knowledgeGraph[resultNodeKeys[i]].edges.includes(resultNodeKeys[j])) knowledgeGraph[resultNodeKeys[i]].edges.push(resultNodeKeys[j]);
+      if (knowledgeGraph[resultNodeKeys[j]] && !knowledgeGraph[resultNodeKeys[j]].edges.includes(resultNodeKeys[i])) knowledgeGraph[resultNodeKeys[j]].edges.push(resultNodeKeys[i]);
+    }
+  }
+  saveGraph();
+  rebuildGraphArrays();
+}
+
+function rebuildGraphArrays() {
+  graphNodes = Object.entries(knowledgeGraph).map(([key, val]) => ({
+    key, concept: val.concept, category: val.category,
+    count: val.sources.length, sources: val.sources,
+    r: Math.min(8 + val.sources.length * 4, 28),
+    x: 0, y: 0, vx: 0, vy: 0
+  }));
+  // Assign initial positions if not set
+  const cx = 210, cy = 200;
+  graphNodes.forEach((n, i) => {
+    const angle = (i / Math.max(graphNodes.length, 1)) * Math.PI * 2;
+    const dist = 60 + Math.random() * 120;
+    n.x = cx + Math.cos(angle) * dist;
+    n.y = cy + Math.sin(angle) * dist;
+  });
+  // Build edge array
+  graphEdges = [];
+  const nodeMap = {};
+  graphNodes.forEach((n, i) => nodeMap[n.key] = i);
+  Object.entries(knowledgeGraph).forEach(([key, val]) => {
+    if (val.edges) {
+      val.edges.forEach(targetKey => {
+        if (nodeMap[targetKey] !== undefined && nodeMap[key] !== undefined && key < targetKey) {
+          graphEdges.push([nodeMap[key], nodeMap[targetKey]]);
+        }
+      });
+    }
+  });
+  // Force simulation
+  runForceLayout(80);
+}
+
+function runForceLayout(iterations) {
+  const W = 420, H = 400;
+  for (let iter = 0; iter < iterations; iter++) {
+    // Repulsion (Coulomb)
+    for (let i = 0; i < graphNodes.length; i++) {
+      for (let j = i + 1; j < graphNodes.length; j++) {
+        let dx = graphNodes[j].x - graphNodes[i].x;
+        let dy = graphNodes[j].y - graphNodes[i].y;
+        let dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        let force = 800 / (dist * dist);
+        let fx = (dx / dist) * force;
+        let fy = (dy / dist) * force;
+        graphNodes[i].vx -= fx; graphNodes[i].vy -= fy;
+        graphNodes[j].vx += fx; graphNodes[j].vy += fy;
+      }
+    }
+    // Attraction (springs along edges)
+    graphEdges.forEach(([a, b]) => {
+      let dx = graphNodes[b].x - graphNodes[a].x;
+      let dy = graphNodes[b].y - graphNodes[a].y;
+      let dist = Math.sqrt(dx * dx + dy * dy) || 1;
+      let force = (dist - 80) * 0.02;
+      let fx = (dx / dist) * force;
+      let fy = (dy / dist) * force;
+      graphNodes[a].vx += fx; graphNodes[a].vy += fy;
+      graphNodes[b].vx -= fx; graphNodes[b].vy -= fy;
+    });
+    // Center gravity
+    graphNodes.forEach(n => {
+      n.vx += (W / 2 - n.x) * 0.005;
+      n.vy += (H / 2 - n.y) * 0.005;
+    });
+    // Apply velocity with damping
+    const damping = 0.85;
+    graphNodes.forEach(n => {
+      n.vx *= damping; n.vy *= damping;
+      n.x += n.vx; n.y += n.vy;
+      n.x = Math.max(n.r + 5, Math.min(W - n.r - 5, n.x));
+      n.y = Math.max(n.r + 5, Math.min(H - n.r - 5, n.y));
+    });
+  }
+}
+
+function renderGraph() {
+  const count = graphNodes.length;
+  document.getElementById('surfCount').textContent = count + ' concept' + (count !== 1 ? 's' : '');
+
+  if (count === 0) {
+    document.getElementById('surfEmpty').style.display = 'block';
+    document.getElementById('surfSvg').style.display = 'none';
+    return;
+  }
+  document.getElementById('surfEmpty').style.display = 'none';
+  const svg = document.getElementById('surfSvg');
+  svg.style.display = 'block';
+  svg.setAttribute('viewBox', '0 0 420 400');
+
+  let html = '';
+  // Edges
+  graphEdges.forEach(([a, b]) => {
+    html += `<line x1="${graphNodes[a].x}" y1="${graphNodes[a].y}" x2="${graphNodes[b].x}" y2="${graphNodes[b].y}" stroke="rgba(139,141,152,0.12)" stroke-width="1"/>`;
+  });
+  // Nodes
+  graphNodes.forEach((n, i) => {
+    const color = CATEGORY_COLORS[n.category] || '#7c3aed';
+    const isSelected = selectedNode === n.key;
+    const opacity = selectedNode && !isSelected ? 0.3 : 1;
+    html += `<circle cx="${n.x}" cy="${n.y}" r="${n.r}" fill="${color}" fill-opacity="${isSelected ? 0.9 : 0.6}" stroke="${isSelected ? '#fff' : 'none'}" stroke-width="${isSelected ? 2 : 0}" style="cursor:pointer;opacity:${opacity}" onclick="selectNode('${n.key}')"/>`;
+    if (n.r >= 12 || isSelected) {
+      const label = n.concept.length > 16 ? n.concept.substring(0, 14) + '..' : n.concept;
+      html += `<text x="${n.x}" y="${n.y + n.r + 12}" text-anchor="middle" fill="var(--text-dim)" font-size="9" style="pointer-events:none;opacity:${opacity}">${escapeHtml(label)}</text>`;
+    }
+  });
+  svg.innerHTML = html;
+  updateSvgTransform();
+}
+
+function selectNode(key) {
+  if (selectedNode === key) { selectedNode = null; document.getElementById('surfDetail').className = 'surf-detail'; renderGraph(); return; }
+  selectedNode = key;
+  renderGraph();
+  const node = knowledgeGraph[key];
+  if (!node) return;
+  const detail = document.getElementById('surfDetail');
+  const color = CATEGORY_COLORS[node.category] || '#7c3aed';
+  let html = `<div class="surf-detail-title" style="color:${color}">${escapeHtml(node.concept)}</div>`;
+  html += `<div class="surf-detail-cat">${escapeHtml(node.category.replace(/_/g, ' '))}</div>`;
+  node.sources.forEach(s => {
+    html += `<div class="surf-source"><span class="surf-source-company">${escapeHtml(s.company)}</span> -- ${escapeHtml(s.role_title)}<br><span style="color:var(--text-muted)">${escapeHtml(s.relevance)}</span></div>`;
+  });
+  detail.innerHTML = html;
+  detail.className = 'surf-detail open';
+}
+
+function updateSvgTransform() {
+  const svg = document.getElementById('surfSvg');
+  svg.style.transform = `translate(${surfPanX}px, ${surfPanY}px) scale(${surfZoom})`;
+}
+
+// Pan & Zoom
+(function initSurfInteraction() {
+  const wrap = document.getElementById('surfGraphWrap');
+  if (!wrap) return;
+
+  wrap.addEventListener('wheel', e => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    surfZoom = Math.max(0.3, Math.min(3, surfZoom * delta));
+    updateSvgTransform();
+  }, { passive: false });
+
+  wrap.addEventListener('mousedown', e => {
+    if (e.target.tagName === 'circle') return;
+    isDragging = true;
+    dragStartX = e.clientX; dragStartY = e.clientY;
+    panStartX = surfPanX; panStartY = surfPanY;
+  });
+
+  window.addEventListener('mousemove', e => {
+    if (!isDragging) return;
+    surfPanX = panStartX + (e.clientX - dragStartX);
+    surfPanY = panStartY + (e.clientY - dragStartY);
+    updateSvgTransform();
+  });
+
+  window.addEventListener('mouseup', () => { isDragging = false; });
+})();
+
+// Animate settling when new nodes added
+function animateSettle(iterations) {
+  let i = 0;
+  function step() {
+    if (i >= iterations) { renderGraph(); return; }
+    runForceLayout(2);
+    renderGraph();
+    i += 2;
+    requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
 </script>
 </body>
 </html>
