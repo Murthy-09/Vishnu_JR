@@ -687,10 +687,11 @@ async function analyzePosting(posting) {
   const fullData = await callAgent('claude-opus-4-6', 8000, fullSystem, fullPrompt);
   const fullResult = parseAgentResponse(fullData);
 
-  // Merge: keep Sonnet's scoring, use Opus's full package
+  // Merge: keep Sonnet's scoring + knowledge_nodes, use Opus's full package
   fullResult.dimensions = scoreResult.dimensions;
   fullResult.overall = scoreResult.overall;
   fullResult.pass = scoreResult.pass;
+  fullResult.knowledge_nodes = scoreResult.knowledge_nodes;
 
   return fullResult;
 }
