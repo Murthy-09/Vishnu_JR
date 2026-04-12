@@ -8,21 +8,9 @@ const NOTION_VERSION = '2022-06-28';
 const ANTHROPIC_API = 'https://api.anthropic.com/v1/messages';
 const RESULTS_BLOCK_TITLE = 'VISHNU_JR_RESULTS_STORE';
 
-const ALLOWED_ORIGINS = [
-  'https://murthy-09.github.io',
-  'http://localhost',
-  'http://127.0.0.1',
-];
-
-function isAllowedOrigin(origin) {
-  if (!origin) return false;
-  return ALLOWED_ORIGINS.some(allowed => origin === allowed || origin.startsWith(allowed + ':'));
-}
-
 function corsHeaders(origin) {
-  const allowedOrigin = isAllowedOrigin(origin) ? origin : ALLOWED_ORIGINS[0];
   return {
-    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Origin': origin || '*',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
   };
