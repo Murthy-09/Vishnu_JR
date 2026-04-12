@@ -683,15 +683,15 @@ function stripPostingBoilerplate(text) {
   ];
   let cleaned = text;
   cutPatterns.forEach(p => { cleaned = cleaned.replace(p, ''); });
-  // Trim to first 3000 chars to avoid timeouts
-  return cleaned.trim().substring(0, 3000);
+  // Trim to first 2000 chars -- enough for any job description, avoids timeouts
+  return cleaned.trim().substring(0, 2000);
 }
 
 async function analyzePosting(posting) {
   const cleanPosting = stripPostingBoilerplate(posting);
   // Step 1: Score with Sonnet (fast, cheap)
   const calibration = buildCalibrationPrompt();
-  const scoreData = await callAgent('claude-sonnet-4-6', 4096, SCORING_PROMPT + calibration, 'Score this job posting and return the JSON. Keep reasoning to 1 sentence per dimension and knowledge_nodes relevance to under 15 words each:\n\n' + cleanPosting);
+  const scoreData = await callAgent('claude-sonnet-4-6', 2048, SCORING_PROMPT + calibration, 'Score this posting. Return ONLY the JSON object, no markdown fences, no explanation. Be concise:\n\n' + cleanPosting);
   const scoreResult = parseAgentResponse(scoreData);
 
   // Validate weighted average
