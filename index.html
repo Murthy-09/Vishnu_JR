@@ -200,7 +200,7 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 <div class="main-col">
 
 <h1><span class="title-dot"></span>Vishnu JR <span class="notion-badge">Batch Mode</span></h1>
-<p class="subtitle">Paste up to 20 job postings separated by ===== on its own line. Scores each across 7 dimensions, generates application packages for roles that pass 70%.</p>
+<p class="subtitle">Paste up to 20 job postings separated by === between each. Scores each across 7 dimensions, generates application packages for roles that pass 70%.</p>
 
 
 <div class="card">
@@ -217,14 +217,14 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 </div>
 
 <div class="card">
-  <label for="batchInput">Job postings — paste up to 20, separated by ===== on its own line</label>
+  <label for="batchInput">Job postings — paste up to 20, separated by === between each</label>
   <textarea id="batchInput" placeholder="Paste job posting 1 here...
 
-=====
+===
 
 Paste job posting 2 here...
 
-=====
+===
 
 Paste job posting 3 here..."></textarea>
   <div class="btn-row">
@@ -598,10 +598,10 @@ async function runBatch() {
   if (!cachedKnowledge) { await loadKnowledge(); }
   if (!cachedKnowledge) { alert('Could not load knowledge base from Notion.'); return; }
 
-  // Split on ===== (5+ equals signs) with any surrounding whitespace
-  const postings = batchText.split(/\s*={5,}\s*/).map(p => p.trim()).filter(p => p.length > 50);
+  // Split on 3+ equals signs (===, ====, =====, etc.) with any surrounding whitespace
+  const postings = batchText.split(/\s*={3,}\s*/).map(p => p.trim()).filter(p => p.length > 50);
   console.log('Split into ' + postings.length + ' postings, lengths: ' + postings.map(p => p.length).join(', '));
-  if (postings.length === 0) { alert('No valid job postings found. Separate postings with --- on its own line.'); return; }
+  if (postings.length === 0) { alert('No valid job postings found. Separate postings with === on its own line.'); return; }
 
   isProcessing = true;
   currentBatchKeys = [];
