@@ -643,8 +643,17 @@ async function runBatch() {
 
 function parseAgentResponse(data) {
   if (data.error) throw new Error(data.error.message || data.error.type || JSON.stringify(data.error));
-  const text = data.content?.find(b => b.type === 'text')?.text || '';
-  return JSON.parse(text.replace(/```json|```/g, '').trim());
+  let text = data.content?.find(b => b.type === 'text')?.text || '';
+  // Strip markdown fences
+  text = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+  // Try direct parse first
+  try { return JSON.parse(text); } catch(e) {}
+  // Try to extract JSON object from mixed text
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (jsonMatch) {
+    try { return JSON.parse(jsonMatch[0]); } catch(e) {}
+  }
+  throw new Error('Could not parse JSON from response: ' + text.substring(0, 80) + '...');
 }
 
 async function callAgent(model, maxTokens, system, userContent) {
