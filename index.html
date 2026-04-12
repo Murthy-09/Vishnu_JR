@@ -161,6 +161,15 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 .surf-source:last-child { border-bottom: none; }
 .surf-source-company { font-weight: 500; color: var(--text); }
 .surf-empty { padding: 3rem 2rem; text-align: center; color: var(--text-muted); font-size: 14px; line-height: 1.6; }
+/* Feedback buttons */
+.feedback-row { display: flex; gap: 6px; align-items: center; }
+.fb-btn { padding: 3px 8px; font-size: 11px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-card); cursor: pointer; transition: all 0.15s; color: var(--text-muted); }
+.fb-btn:hover { border-color: var(--violet); color: var(--violet); }
+.fb-btn.active-up { background: var(--green-light); border-color: var(--green); color: #047857; }
+.fb-btn.active-down { background: #fef2f2; border-color: var(--red); color: #b91c1c; }
+.fb-input { font-size: 12px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-input); color: var(--text); width: 250px; margin-left: 6px; display: none; }
+.fb-input.open { display: inline-block; }
+.fb-saved { font-size: 10px; color: var(--green); margin-left: 6px; }
 /* Title accent dot */
 .title-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--spectrum); margin-right: 4px; }
 </style>
@@ -386,8 +395,16 @@ Return ONLY valid JSON, no markdown fences, no preamble:
     "core_challenge": "<the specific technical challenge this team hires for>",
     "vishnu_connection": "<how Vishnu's specific work connects to this team's core problems>"
   },
-  "physics_connection": "<2-3 paragraph explanation of the genuine underlying physics or domain connection between Vishnu's Hopkins/Candela work and the core technical problems this role solves every day. Be specific about which physics concepts transfer and why. This should help Vishnu articulate his fit in a cover letter or opening interview answer. If connection is weak, say so honestly.>",
-  "communication_map": "<2 paragraph explanation of how this specific role develops corporate communication skills. What meetings would Vishnu be in? What types of stakeholders? What documentation? What soft skill gaps does this role specifically address? If communication development value is low, note that honestly.>",
+  "priority_map": {
+    "physics_relevance": "<1-2 sentences: how this role connects to Vishnu's optical/simulation physics foundation. If weak, say so honestly.>",
+    "career_priorities_served": [
+      {
+        "priority": "<one of: communication_skills, cross_functional_experience, fab_credential, financial_independence, networking, technical_depth>",
+        "how": "<1 sentence: how this specific role serves this priority>"
+      }
+    ],
+    "future_knowledge": "<what physics/engineering concepts from this role's domain should Vishnu explore regardless of whether he applies -- industry awareness value>"
+  },
   "tailoring_diff": {
     "section_header": "<which section header was chosen from the lookup table and why>",
     "candela_variant": "<which Candela role title and bullet set was used (semiconductor/TSE-facing OR R&D/medical/regulatory-facing) and why>",
@@ -415,7 +432,7 @@ Return ONLY valid JSON, no markdown fences, no preamble:
       "tier": "<READY NOW or PREPARATION PATH or GENUINE GAP>",
       "probe_question": "<the exact question a technical interviewer would ask to probe this claim>",
       "honest_answer": "<what Vishnu's honest answer should be — what he actually knows and how to frame the boundary>",
-      "study_brief": "<ONLY if tier is PREPARATION PATH: exactly what to read or study, how long it would take, what the physics connection is>"
+      "study_brief": "<ONLY for PREPARATION PATH. Return as object: {underlying_concept: what core concept the interview probes, what_you_know: what Vishnu already knows that connects, gap_to_close: specifically what he does not know yet, resources: specific books/papers/videos/practice, time_estimate: realistic hours or days, business_context: why this matters to the company}>"
     }
   ],
   "rejection_reason": "<if pass is false: brief explanation of why this role was filtered out>"
@@ -646,7 +663,8 @@ Return the SAME JSON output format. This should be BETTER than any individual ve
 
 async function analyzePosting(posting) {
   // Step 1: Score with Sonnet (fast, cheap) -- SCORING_PROMPT has condensed profile built in, no need for full Notion KB
-  const scoreData = await callAgent('claude-sonnet-4-6', 4096, SCORING_PROMPT, 'Score this job posting and return the JSON. Keep reasoning to 1 sentence per dimension and knowledge_nodes relevance to under 15 words each:\n\n' + posting);
+  const calibration = buildCalibrationPrompt();
+  const scoreData = await callAgent('claude-sonnet-4-6', 4096, SCORING_PROMPT + calibration, 'Score this job posting and return the JSON. Keep reasoning to 1 sentence per dimension and knowledge_nodes relevance to under 15 words each:\n\n' + posting);
   const scoreResult = parseAgentResponse(scoreData);
 
   // Validate weighted average
@@ -812,12 +830,20 @@ function buildJobCard(r, type, globalIndex) {
       </div>
     </div>
     <div class="job-card-body">
+      <div style="padding:8px 18px;border-bottom:1px solid var(--border-subtle);display:flex;align-items:center;justify-content:space-between">
+        <div class="feedback-row">
+          <span style="font-size:11px;color:var(--text-muted)">Accurate?</span>
+          <button class="fb-btn ${r._feedback?.agree === true ? 'active-up' : ''}" onclick="event.stopPropagation();giveFeedback(${globalIndex},true)">&#x1F44D;</button>
+          <button class="fb-btn ${r._feedback?.agree === false ? 'active-down' : ''}" onclick="event.stopPropagation();giveFeedback(${globalIndex},false)">&#x1F44E;</button>
+          <input class="fb-input ${r._feedback?.agree === false ? 'open' : ''}" id="fb-note-${globalIndex}" placeholder="What did the tool miss?" value="${escapeForAttr(r._feedback?.note || '')}" onchange="saveFeedbackNote(${globalIndex},this.value)" onclick="event.stopPropagation()"/>
+          ${r._feedback ? '<span class="fb-saved">saved</span>' : ''}
+        </div>
+      </div>
       <div class="tabs">
         <button class="tab active" onclick="switchTab(this,'scoring')">Score</button>
         <button class="tab" onclick="switchTab(this,'resume')">Resume</button>
         <button class="tab" onclick="switchTab(this,'fields')">Workday fields</button>
-        <button class="tab" onclick="switchTab(this,'physics')">Physics map</button>
-        <button class="tab" onclick="switchTab(this,'comm')">Comm map</button>
+        <button class="tab" onclick="switchTab(this,'priority')">Priority</button>
         <button class="tab" onclick="switchTab(this,'tailoring')">Tailoring</button>
         <button class="tab" onclick="switchTab(this,'defense')">Defensibility</button>
         ${(r._versions && r._versions.length > 0) ? `<button class="tab" onclick="switchTab(this,'versions')">Versions (${r._versions.length})</button>` : ''}
@@ -825,8 +851,7 @@ function buildJobCard(r, type, globalIndex) {
       <div class="tab-content active" data-tab="scoring">${buildScoringTab(r)}</div>
       <div class="tab-content" data-tab="resume">${buildResumeTab(r)}</div>
       <div class="tab-content" data-tab="fields">${buildFieldsTab(r)}</div>
-      <div class="tab-content" data-tab="physics">${buildPhysicsTab(r)}</div>
-      <div class="tab-content" data-tab="comm">${buildCommTab(r)}</div>
+      <div class="tab-content" data-tab="priority">${buildPriorityTab(r)}</div>
       <div class="tab-content" data-tab="tailoring">${buildTailoringTab(r)}</div>
       <div class="tab-content" data-tab="defense">${buildDefenseTab(r)}</div>
       ${(r._versions && r._versions.length > 0) ? `<div class="tab-content" data-tab="versions">${buildVersionsTab(r)}</div>` : ''}
@@ -864,14 +889,38 @@ function buildFieldsTab(r) {
   }).join('');
 }
 
-function buildPhysicsTab(r) {
-  if (!r.physics_connection) return '<p style="font-size:13px;color:#9a9a9a;font-style:italic">No physics connection map generated.</p>';
-  return `<div class="physics-map">${escapeHtml(r.physics_connection).replace(/\n\n/g, '</div><div class="physics-map" style="margin-top:10px">')}</div>`;
-}
+function buildPriorityTab(r) {
+  const pm = r.priority_map;
+  // Fallback for old results that have physics_connection/communication_map
+  if (!pm && !r.physics_connection && !r.communication_map) return '<p style="font-size:13px;color:#9a9a9a;font-style:italic">No priority map generated.</p>';
 
-function buildCommTab(r) {
-  if (!r.communication_map) return '<p style="font-size:13px;color:#9a9a9a;font-style:italic">No communication map generated.</p>';
-  return `<div class="comm-map">${escapeHtml(r.communication_map).replace(/\n\n/g, '</div><div class="comm-map" style="margin-top:10px">')}</div>`;
+  let html = '';
+
+  if (pm) {
+    // Physics relevance
+    if (pm.physics_relevance) {
+      html += `<div class="physics-map" style="margin-bottom:12px"><div style="font-size:11px;font-weight:600;color:var(--violet);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px">Physics Relevance</div>${escapeHtml(pm.physics_relevance)}</div>`;
+    }
+    // Career priorities served
+    if (pm.career_priorities_served && pm.career_priorities_served.length > 0) {
+      html += '<div style="margin-bottom:12px"><div style="font-size:11px;font-weight:600;color:var(--green);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Career Priorities Served</div>';
+      const priorityLabels = { communication_skills: 'Communication Skills', cross_functional_experience: 'Cross-Functional Experience', fab_credential: 'Fab Credential', financial_independence: 'Financial Independence', networking: 'Networking', technical_depth: 'Technical Depth' };
+      pm.career_priorities_served.forEach(p => {
+        const label = priorityLabels[p.priority] || p.priority;
+        html += `<div style="display:flex;gap:8px;align-items:baseline;margin-bottom:6px;padding:8px 10px;background:var(--green-light);border-radius:6px;border-left:3px solid var(--green)"><span style="font-size:12px;font-weight:500;color:var(--green);white-space:nowrap">${escapeHtml(label)}</span><span style="font-size:12px;color:var(--text-dim)">${escapeHtml(p.how || '')}</span></div>`;
+      });
+      html += '</div>';
+    }
+    // Future knowledge
+    if (pm.future_knowledge) {
+      html += `<div style="padding:10px;background:var(--bg-input);border-radius:6px;border:1px solid var(--border)"><div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px">Worth Exploring</div><div style="font-size:13px;color:var(--text-dim);line-height:1.6">${escapeHtml(pm.future_knowledge)}</div></div>`;
+    }
+  } else {
+    // Legacy fallback
+    if (r.physics_connection) html += `<div class="physics-map" style="margin-bottom:12px">${escapeHtml(r.physics_connection).replace(/\n\n/g, '</div><div class="physics-map" style="margin-top:10px">')}</div>`;
+    if (r.communication_map) html += `<div class="comm-map">${escapeHtml(r.communication_map).replace(/\n\n/g, '</div><div class="comm-map" style="margin-top:10px">')}</div>`;
+  }
+  return html || '<p style="font-size:13px;color:#9a9a9a;font-style:italic">No priority data.</p>';
 }
 
 function buildTailoringTab(r) {
@@ -966,11 +1015,25 @@ function buildDefenseTab(r) {
   if (!r.defensibility || r.defensibility.length === 0) return '<p style="font-size:13px;color:#9a9a9a;font-style:italic">No defensibility assessment generated.</p>';
   return r.defensibility.map(d => {
     const tierClass = d.tier === 'READY NOW' ? 'def-low' : d.tier === 'PREPARATION PATH' ? 'def-med' : 'def-high';
-    const tierLabel = d.tier === 'READY NOW' ? 'Ready now — defend cold' : d.tier === 'PREPARATION PATH' ? 'Preparation path exists' : 'Genuine gap — reframe needed';
+    const tierLabel = d.tier === 'READY NOW' ? 'Ready now' : d.tier === 'PREPARATION PATH' ? 'Preparation path' : 'Genuine gap';
     let html = `<div class="def-item ${tierClass}"><div class="def-bullet">${escapeHtml(d.bullet || '')}</div><div class="def-risk">${tierLabel}</div>`;
     if (d.probe_question) html += `<div class="def-brief"><strong>Probe:</strong> ${escapeHtml(d.probe_question)}</div>`;
     if (d.honest_answer) html += `<div class="def-brief" style="margin-top:4px"><strong>Your answer:</strong> ${escapeHtml(d.honest_answer)}</div>`;
-    if (d.study_brief) html += `<div class="def-brief" style="margin-top:4px;background:rgba(255,255,255,0.5);padding:6px;border-radius:4px"><strong>Study brief:</strong> ${escapeHtml(d.study_brief)}</div>`;
+    // Structured study brief (object) or legacy string
+    const sb = d.study_brief;
+    if (sb && typeof sb === 'object') {
+      html += '<div style="margin-top:6px;padding:10px;background:var(--violet-light);border-radius:6px;border-left:3px solid var(--violet)">';
+      html += '<div style="font-size:11px;font-weight:600;color:var(--violet);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Preparation Brief</div>';
+      if (sb.underlying_concept) html += `<div class="def-brief"><strong>Core concept:</strong> ${escapeHtml(sb.underlying_concept)}</div>`;
+      if (sb.what_you_know) html += `<div class="def-brief" style="margin-top:3px"><strong>What you know:</strong> ${escapeHtml(sb.what_you_know)}</div>`;
+      if (sb.gap_to_close) html += `<div class="def-brief" style="margin-top:3px"><strong>Gap to close:</strong> ${escapeHtml(sb.gap_to_close)}</div>`;
+      if (sb.resources) html += `<div class="def-brief" style="margin-top:3px"><strong>Resources:</strong> ${escapeHtml(sb.resources)}</div>`;
+      if (sb.time_estimate) html += `<div class="def-brief" style="margin-top:3px"><strong>Time:</strong> ${escapeHtml(sb.time_estimate)}</div>`;
+      if (sb.business_context) html += `<div class="def-brief" style="margin-top:3px"><strong>Why it matters:</strong> ${escapeHtml(sb.business_context)}</div>`;
+      html += '</div>';
+    } else if (sb) {
+      html += `<div class="def-brief" style="margin-top:4px;background:var(--violet-light);padding:6px;border-radius:4px"><strong>Study brief:</strong> ${escapeHtml(sb)}</div>`;
+    }
     html += '</div>';
     return html;
   }).join('');
@@ -1027,6 +1090,41 @@ async function clearAllHistory() {
   selectedNode = null;
   renderGraph();
   try { await fetch(`${WORKER_URL}/clear-results`, { method: 'POST' }); } catch(e) { console.warn('Notion clear failed:', e.message); }
+}
+
+// === FEEDBACK LOOP ===
+
+function giveFeedback(gi, agree) {
+  const r = results[gi];
+  if (!r) return;
+  r._feedback = r._feedback || {};
+  r._feedback.agree = agree;
+  r._feedback.timestamp = new Date().toISOString();
+  if (agree) { r._feedback.note = ''; }
+  saveResultsToStorage(new Date().toLocaleString());
+  // Show/hide note input
+  const noteEl = document.getElementById('fb-note-' + gi);
+  if (noteEl) { noteEl.className = 'fb-input' + (agree ? '' : ' open'); }
+  // Re-render to update button states
+  renderHistory();
+}
+
+function saveFeedbackNote(gi, note) {
+  const r = results[gi];
+  if (!r) return;
+  r._feedback = r._feedback || {};
+  r._feedback.note = note;
+  saveResultsToStorage(new Date().toLocaleString());
+}
+
+function buildCalibrationPrompt() {
+  const feedbacks = results.filter(r => r._feedback && r._feedback.agree === false && r._feedback.note);
+  if (feedbacks.length === 0) return '';
+  let cal = '\n\nCALIBRATION FROM PAST FEEDBACK:\n';
+  feedbacks.slice(-5).forEach(r => {
+    cal += `- ${r.company || ''} ${r.role_title || ''} scored ${r.overall || 0}, user said: "${r._feedback.note}"\n`;
+  });
+  return cal;
 }
 
 // === KNOWLEDGE GRAPH (Surf Panel) ===
