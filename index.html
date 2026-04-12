@@ -624,7 +624,7 @@ async function runBatch() {
 }
 
 function parseAgentResponse(data) {
-  if (data.error) throw new Error(data.error.message);
+  if (data.error) throw new Error(data.error.message || data.error.type || JSON.stringify(data.error));
   const text = data.content?.find(b => b.type === 'text')?.text || '';
   return JSON.parse(text.replace(/```json|```/g, '').trim());
 }
@@ -661,10 +661,33 @@ Return the SAME JSON output format. This should be BETTER than any individual ve
   return parseAgentResponse(data);
 }
 
+function stripPostingBoilerplate(text) {
+  // Remove LinkedIn metadata, candidate stats, company insights, hiring trends
+  const cutPatterns = [
+    /See how you compare.*$/s,
+    /Candidate seniority level.*$/s,
+    /Candidate education level.*$/s,
+    /Exclusive Job Seeker Insights.*$/s,
+    /Powered by Bing.*$/s,
+    /The latest hiring trend.*$/s,
+    /Show match details.*?Help me stand out/gs,
+    /People you can reach out to.*?Show all/gs,
+    /Your AI-powered job assessment.*?Help me stand out/gs,
+    /\d+ total\s*\d+ in the past day/g,
+    /Company focus areas[\s\S]*?Sources:.*$/gm,
+    /Hiring & headcount[\s\S]*?show more/gi,
+  ];
+  let cleaned = text;
+  cutPatterns.forEach(p => { cleaned = cleaned.replace(p, ''); });
+  // Trim to first 4000 chars to avoid timeouts
+  return cleaned.trim().substring(0, 4000);
+}
+
 async function analyzePosting(posting) {
-  // Step 1: Score with Sonnet (fast, cheap) -- SCORING_PROMPT has condensed profile built in, no need for full Notion KB
+  const cleanPosting = stripPostingBoilerplate(posting);
+  // Step 1: Score with Sonnet (fast, cheap)
   const calibration = buildCalibrationPrompt();
-  const scoreData = await callAgent('claude-sonnet-4-6', 4096, SCORING_PROMPT + calibration, 'Score this job posting and return the JSON. Keep reasoning to 1 sentence per dimension and knowledge_nodes relevance to under 15 words each:\n\n' + posting);
+  const scoreData = await callAgent('claude-sonnet-4-6', 4096, SCORING_PROMPT + calibration, 'Score this job posting and return the JSON. Keep reasoning to 1 sentence per dimension and knowledge_nodes relevance to under 15 words each:\n\n' + cleanPosting);
   const scoreResult = parseAgentResponse(scoreData);
 
   // Validate weighted average
@@ -683,7 +706,7 @@ async function analyzePosting(posting) {
 
   // Step 2: Full package with Opus (only for passing roles)
   const fullSystem = SYSTEM_PROMPT + '\n\n=== LIVE KNOWLEDGE BASE FROM NOTION ===\n' + cachedKnowledge;
-  const fullPrompt = 'Generate the complete application package for this passing job posting.\n\nScoring data from pre-screen:\n' + JSON.stringify(scoreResult) + '\n\nFull job posting:\n\n' + posting;
+  const fullPrompt = 'Generate the complete application package for this passing job posting.\n\nScoring data from pre-screen:\n' + JSON.stringify(scoreResult) + '\n\nFull job posting:\n\n' + cleanPosting;
   const fullData = await callAgent('claude-opus-4-6', 8000, fullSystem, fullPrompt);
   const fullResult = parseAgentResponse(fullData);
 
