@@ -598,7 +598,17 @@ async function runBatch() {
   if (!cachedKnowledge) { await loadKnowledge(); }
   if (!cachedKnowledge) { alert('Could not load knowledge base from Notion.'); return; }
 
-  const postings = batchText.split(/\r?\n\s*-{3,}\s*\r?\n/).map(p => p.trim()).filter(p => p.length > 20);
+  // Split on a line that is ONLY dashes (3+), with optional whitespace around it
+  // Handles: \n---\n, \r\n---\r\n, \n --- \n, \n-----\n
+  const postings = batchText.split(/[ \t]*\r?\n[ \t]*-{3,}[ \t]*\r?\n[ \t]*/).map(p => p.trim()).filter(p => p.length > 20);
+  if (postings.length <= 1) {
+    // Fallback: try splitting on just --- anywhere (in case user didn't put newlines)
+    const fallback = batchText.split(/-{3,}/).map(p => p.trim()).filter(p => p.length > 100);
+    if (fallback.length > postings.length) {
+      postings.length = 0;
+      fallback.forEach(p => postings.push(p));
+    }
+  }
   console.log('Split into ' + postings.length + ' postings, lengths: ' + postings.map(p => p.length).join(', '));
   if (postings.length === 0) { alert('No valid job postings found. Separate postings with --- on its own line.'); return; }
 
@@ -613,12 +623,19 @@ async function runBatch() {
 
   for (let i = 0; i < postings.length; i++) {
     const posting = postings[i];
-    document.getElementById('progressLabel').textContent = `Processing ${i+1} of ${postings.length}...`;
+    const preview = postings[i].substring(0, 80).replace(/\n/g, ' ');
+    document.getElementById('progressLabel').textContent = `Posting ${i+1} of ${postings.length} -- Scoring with Sonnet...`;
     document.getElementById('progressBar').style.width = `${Math.round(((i) / postings.length) * 100)}%`;
-    document.getElementById('progressDetail').textContent = `Analyzing posting ${i+1}. ${postings.length - i - 1} remaining after this.`;
+    document.getElementById('progressDetail').textContent = preview + '...';
 
     try {
+      document.getElementById('progressLabel').textContent = `Posting ${i+1} of ${postings.length} -- Scoring with Sonnet...`;
       const result = await analyzePosting(posting);
+      if (result.pass) {
+        document.getElementById('progressLabel').textContent = `Posting ${i+1} of ${postings.length} -- Passed! Generated full package with Opus.`;
+      } else {
+        document.getElementById('progressLabel').textContent = `Posting ${i+1} of ${postings.length} -- Filtered (${result.overall}/100). Moving to next...`;
+      }
       result._raw = posting;
       const idx = upsertResult(result);
       currentBatchKeys.push(result._key);
