@@ -188,6 +188,11 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
     <button onclick="loadKnowledge()" style="font-size:12px;padding:4px 10px">Refresh from Notion</button>
   </div>
   <div id="kbStatus" class="kb-status">Not loaded.</div>
+  <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+    <div class="section-label" style="margin:0;white-space:nowrap">Anthropic API Key</div>
+    <input type="password" id="apiKeyInput" placeholder="sk-ant-..." style="flex:1;padding:8px 10px;font-size:13px;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text);font-family:monospace" onchange="saveApiKey(this.value)"/>
+    <span id="apiKeyStatus" style="font-size:11px;color:var(--text-muted)"></span>
+  </div>
 </div>
 
 <div class="card">
@@ -442,6 +447,14 @@ let cachedKnowledge = null;
 let results = [];
 let currentBatchKeys = [];
 let isProcessing = false;
+let anthropicKey = localStorage.getItem('vj_api_key') || '';
+
+function saveApiKey(key) {
+  anthropicKey = key.trim();
+  localStorage.setItem('vj_api_key', anthropicKey);
+  document.getElementById('apiKeyStatus').textContent = anthropicKey ? 'saved' : '';
+  document.getElementById('apiKeyStatus').style.color = 'var(--green)';
+}
 
 function getResultKey(r) {
   return ((r.company || '') + '::' + (r.role_title || '')).toLowerCase().trim();
@@ -478,6 +491,11 @@ window.onload = () => {
   loadKnowledge();
   loadSavedResults();
   loadGraph();
+  if (anthropicKey) {
+    document.getElementById('apiKeyInput').value = anthropicKey;
+    document.getElementById('apiKeyStatus').textContent = 'saved';
+    document.getElementById('apiKeyStatus').style.color = 'var(--green)';
+  }
 };
 
 async function loadKnowledge() {
@@ -630,14 +648,20 @@ function parseAgentResponse(data) {
 }
 
 async function callAgent(model, maxTokens, system, userContent) {
-  const res = await fetch(`${WORKER_URL}/analyze`, {
+  if (!anthropicKey) throw new Error('Enter your Anthropic API key above');
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'x-api-key': anthropicKey,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
     body: JSON.stringify({ model, max_tokens: maxTokens, system, messages: [{ role: 'user', content: userContent }] })
   });
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`API returned ${res.status}: ${text.substring(0, 100)}`);
+    const err = await res.json().catch(() => ({ error: { message: `HTTP ${res.status}` } }));
+    throw new Error(err.error?.message || `API returned ${res.status}`);
   }
   return res.json();
 }
