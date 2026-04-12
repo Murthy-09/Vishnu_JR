@@ -621,8 +621,11 @@ async function runBatch() {
       result._raw = posting;
       const idx = upsertResult(result);
       currentBatchKeys.push(result._key);
-      mergeNodes(result);
-      animateSettle(40);
+      // Only add graph nodes on first analysis of a role, not re-runs
+      if (!result._versions || result._versions.length === 0) {
+        mergeNodes(result);
+        animateSettle(40);
+      }
 
       // Synthesize master version if this role has previous versions and passes
       if (result._versions.length > 0 && result.pass) {
@@ -1365,19 +1368,18 @@ let selectedNode = null;
 function loadGraph() {
   const saved = localStorage.getItem('vj_graph');
   if (saved) { try { knowledgeGraph = JSON.parse(saved); } catch(e) {} }
-  // Rebuild from any results that have knowledge_nodes but aren't in the graph yet
-  let added = false;
-  results.forEach(r => {
-    if (r.knowledge_nodes && Array.isArray(r.knowledge_nodes)) {
-      r.knowledge_nodes.forEach(node => {
-        if (!node.concept) return;
-        const key = node.concept.toLowerCase().trim();
-        if (!knowledgeGraph[key]) { added = true; }
-      });
-      mergeNodes(r);
-    }
-  });
-  if (added) saveGraph();
+  // Only rebuild from results if graph is empty (first load or after clear)
+  if (Object.keys(knowledgeGraph).length === 0) {
+    // Deduplicate: only merge from the latest version of each role (skip _versions entries)
+    const seen = new Set();
+    results.forEach(r => {
+      if (r.knowledge_nodes && Array.isArray(r.knowledge_nodes) && r._key && !seen.has(r._key)) {
+        seen.add(r._key);
+        mergeNodes(r);
+      }
+    });
+    saveGraph();
+  }
   rebuildGraphArrays();
   renderGraph();
 }
