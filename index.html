@@ -598,7 +598,7 @@ async function runBatch() {
   if (!cachedKnowledge) { await loadKnowledge(); }
   if (!cachedKnowledge) { alert('Could not load knowledge base from Notion.'); return; }
 
-  const postings = batchText.split(/\n---\n/).map(p => p.trim()).filter(p => p.length > 50);
+  const postings = batchText.split(/\r?\n\s*-{3,}\s*\r?\n/).map(p => p.trim()).filter(p => p.length > 50);
   if (postings.length === 0) { alert('No valid job postings found. Separate postings with --- on its own line.'); return; }
 
   isProcessing = true;
