@@ -635,6 +635,10 @@ async function callAgent(model, maxTokens, system, userContent) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ model, max_tokens: maxTokens, system, messages: [{ role: 'user', content: userContent }] })
   });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`API returned ${res.status}: ${text.substring(0, 100)}`);
+  }
   return res.json();
 }
 
@@ -679,8 +683,8 @@ function stripPostingBoilerplate(text) {
   ];
   let cleaned = text;
   cutPatterns.forEach(p => { cleaned = cleaned.replace(p, ''); });
-  // Trim to first 4000 chars to avoid timeouts
-  return cleaned.trim().substring(0, 4000);
+  // Trim to first 3000 chars to avoid timeouts
+  return cleaned.trim().substring(0, 3000);
 }
 
 async function analyzePosting(posting) {
