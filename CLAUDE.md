@@ -87,7 +87,7 @@ The same night, April 5-6 2026, Vishnu built Vishnu JR from scratch over one ses
 ## CURRENT SITUATION AS OF APRIL 6, 2026
 
 ### Financial Reality
-Graduating May 2026. Must be financially independent. Cannot return to India. Cannot rely on brother in Cambridge long-term. Needs employment starting June 2026.
+Graduating May 2026. Must be financially independent. Cannot return to India. Cannot rely on brother in Cambridge long-term. Needs employment starting June 2026. Open to relocating anywhere in the US for the right role -- location is not a dealbreaker.
 
 ### Job Search Status
 ACTIVE -- waiting for response:

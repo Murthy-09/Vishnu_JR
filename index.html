@@ -274,13 +274,13 @@ const WORKER_URL = "https://vishnujr.vishnu-c5c.workers.dev";
 
 const SCORING_PROMPT = `Score this job posting for Vishnu Murthy. Return JSON only.
 
-VISHNU: BS Physics, Brandeis 2026. US Citizen. Built Hopkins/TCC optical inspection simulator (45% contrast improvement, 250nm pitch). Cleared 2 KLA PROLITH technical rounds. Candela Medical R&D Intern: Monte Carlo+COMSOL+Zemax simulation, BKMs, FDA docs. Skills: Python, MATLAB, COMSOL, Zemax, Monte Carlo, Hopkins/TCC, darkfield/brightfield inspection, optical metrology, DOE, failure analysis, data analytics, defect detection, semiconductor device physics, process control, BKM documentation. Already applied: KLA TSE Phoenix (2533268), KLA TSE Chandler (2634259). Preferred locations: Phoenix/Chandler AZ, Boston/Waltham MA. Acceptable: Bay Area, OR, CT, TX. Reject: security clearance required, international, power electronics/GaAs.
+VISHNU: BS Physics, Brandeis 2026. US Citizen. Open to relocation anywhere in US. Built Hopkins/TCC optical inspection simulator (45% contrast improvement, 250nm pitch). Cleared 2 KLA PROLITH technical rounds. Candela Medical R&D Intern: Monte Carlo+COMSOL+Zemax simulation, BKMs, FDA docs. Skills: Python, MATLAB, COMSOL, Zemax, Monte Carlo, Hopkins/TCC, darkfield/brightfield inspection, optical metrology, DOE, failure analysis, data analytics, defect detection, semiconductor device physics, process control, BKM documentation. Already applied: KLA TSE Phoenix (2533268), KLA TSE Chandler (2634259). Reject: active security clearance required, international relocation, power electronics/GaAs with zero optics connection.
 
 SCORE 7 DIMENSIONS (weighted average, pass=70+):
-D1 Technical overlap (25%): Check posting's desired skills vs Vishnu's actual skills. 90-100=direct optical/metrology match. 70-89=3+ skill overlaps in posting. 50-69=1-2 overlaps. 30-49=weak. 0-29=none.
+D1 Technical overlap (25%): Check posting's desired skills vs Vishnu's actual skills. 90-100=direct optical/metrology match. 70-89=3+ skill overlaps OR same semiconductor industry (fab process, wafer handling, thin film, etch, deposition, bonding, packaging are all semiconductor physics). 50-69=1-2 overlaps. 30-49=weak. 0-29=none.
 D2 Experience fit (20%): 90-100=BS+0-2yr OK. 70-89=BS+2yr arguable. 50-69=MS preferred. 30-49=MS/PhD required. 0-29=PhD/clearance.
-D3 Location (12%): 100=Phoenix/Chandler/Boston/Waltham/Wilmington. 85=Bay Area/OR/CT/TX. 70=other US. 0=international.
-D4 Trajectory (18%): 90-100=KLA/ASML/Onto/Applied/Halo direct. 70-89=photonics R&D. 60-69=credential builder (fab/cleanroom/SPC fills gap). 50-59=Candela RA bridge. 30-49=weak. 0-29=detour.
+D3 Location (12%): 100=Phoenix/Chandler/Boston/Waltham/Wilmington. 90=Bay Area/OR/CT/TX. 75=any other US location (Vishnu is open to relocating). 0=international only.
+D4 Trajectory (18%): 90-100=KLA/ASML/Onto/Applied/Halo direct. 70-89=photonics R&D. 60-69=credential builder (ANY semiconductor fab/cleanroom/process role at a major company fills the fab experience gap -- wafer bonding, etch, deposition, CMP, litho all count). 50-59=Candela RA bridge. 30-49=weak non-semi. 0-29=detour.
 D5 Barrier (10%): 100=BS OK. 70=stretch. 30=MS preferred. 0=PhD/clearance required.
 D6 Company (5%): 90-100=KLA/ASML/Applied/Onto/Nvidia/Halo. 70-89=Lumentum/Coherent/Candela/Micron/Intel/ZEISS. 50-69=general semi. 0-29=unrelated.
 D7 Communication (10%): 90-100=customer-facing/RA/AE. 70-89=cross-functional. 50-69=some team. 30-49=individual. 0-29=none.
