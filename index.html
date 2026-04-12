@@ -482,8 +482,8 @@ function getResultKey(r) {
 }
 
 function upsertResult(result) {
-  // Skip results with no meaningful identity
-  if (!result.role_title || !result.company || result.role_title.startsWith('Posting')) {
+  // Error results without proper identity -- still push but don't dedup
+  if (!result.role_title || !result.company) {
     results.push(result);
     return results.length - 1;
   }
@@ -826,7 +826,7 @@ function renderResults(timestamp) {
 function renderHistory() {
   const historySection = document.getElementById('history-section');
   // Filter out bad data
-  const validResults = results.filter(r => r.role_title && !r.role_title.startsWith('Posting'));
+  const validResults = results.filter(r => r.role_title && r.role_title !== 'Unknown role');
   if (validResults.length === 0) {
     historySection.style.display = 'none';
     return;
